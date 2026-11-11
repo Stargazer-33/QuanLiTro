@@ -1,4 +1,4 @@
-# An Cư · Hệ thống quản lý phòng trọ
+# L.Maria · Hệ thống quản lý phòng trọ
 
 Ứng dụng quản lý nhà trọ thuần **HTML, CSS, JavaScript**, không có backend và không cần
 cài đặt thư viện. Toàn bộ dữ liệu được lưu trong `localStorage` của trình duyệt, nên có thể
