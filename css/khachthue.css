@@ -1,0 +1,19 @@
+/* ============================================================
+   khachthue.css — Tinh chỉnh riêng cho trang khách thuê.
+   Nội dung chỉ của một người nên ưu tiên chiều rộng đọc thoải mái.
+   ============================================================ */
+
+.man { max-width: 1080px; }
+
+/* Hóa đơn và hợp đồng của khách có nhiều dòng tiền: giữ số thẳng cột */
+.man .the-bang td .so { white-space: nowrap; }
+.man .khoi-tien { margin-top: 12px; }
+
+/* Thẻ thông tin trên trang tổng quan gọn hơn một chút */
+.man .the { padding: 22px; }
+.man .ds-mo-ta > div { grid-template-columns: 150px 1fr; }
+
+@media (max-width: 560px) {
+  .man .the { padding: 18px; }
+  .man .ds-mo-ta > div { grid-template-columns: 1fr; gap: 2px; }
+}

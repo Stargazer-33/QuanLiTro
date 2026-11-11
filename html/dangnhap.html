@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Đăng nhập hệ thống quản lý nhà trọ L.Maria dành cho chủ trọ, quản lý và khách thuê.">
+  <title>Đăng nhập · L.Maria</title>
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23272729'/%3E%3Cpath d='M15 35 32 19l17 16v17H15Z' fill='%23fff'/%3E%3Crect x='28' y='39' width='8' height='13' fill='%230066cc'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/chung.css">
+  <link rel="stylesheet" href="../css/dangnhap.css">
+</head>
+
+<body class="trang-dang-nhap">
+  <header class="thanh-dang-nhap">
+    <div class="thanh-dang-nhap__noi">
+      <a class="thuong-hieu" href="../index.html" aria-label="L.Maria — về trang giới thiệu">L.Maria<span>·</span></a>
+      <a class="lien-ket-ve" href="../index.html">← Về trang giới thiệu</a>
+    </div>
+  </header>
+
+  <main class="dang-nhap">
+    <!-- Cột giới thiệu tối màu -->
+    <aside class="dang-nhap__trai">
+      <div class="dang-nhap__mo-dau">
+        <p class="dang-nhap__nhan">Nhà trọ L.Maria</p>
+        <h1>Chào mừng<br>trở lại.</h1>
+        <p class="dang-nhap__dan">
+          Một nơi để xem hóa đơn, hợp đồng và gửi yêu cầu sửa chữa —
+          không cần gọi điện nhiều lần.
+        </p>
+      </div>
+
+      <ul class="danh-sach-quyen">
+        <li><span>01</span>Hóa đơn và công nợ rõ ràng theo từng kỳ.</li>
+        <li><span>02</span>Chỉ số điện nước đối chiếu được.</li>
+        <li><span>03</span>Theo dõi sự cố đến khi hoàn tất.</li>
+      </ul>
+
+      <blockquote class="the-trich-dan">
+        <p>“Về đến nhà là thấy nhẹ. Mọi giấy tờ và hóa đơn đều nằm trong tài khoản.”</p>
+        <footer>Một cư dân tại L.Maria</footer>
+      </blockquote>
+
+      <p class="dang-nhap__dia-chi">18 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh</p>
+    </aside>
+
+    <!-- Cột biểu mẫu đăng nhập -->
+    <section class="dang-nhap__phai">
+      <div class="hop-dang-nhap">
+        <p class="hop-dang-nhap__thuong-hieu">L.Maria<span>·</span></p>
+        <p class="nhan-quan-trong">Đăng nhập</p>
+        <h2>Tài khoản của bạn</h2>
+        <p class="hop-dang-nhap__mo-ta">
+          Tài khoản do chủ trọ hoặc quản lý cấp. Hệ thống không có tự đăng ký.
+        </p>
+
+        <div class="phien-bang" id="phienBang" hidden>
+          <div class="phien-bang__dau">
+            <span class="avatar" id="phienChu">A</span>
+            <div>
+              <strong id="phienTen">—</strong>
+              <p id="phienVaiTro">—</p>
+            </div>
+          </div>
+          <p class="phien-bang__ghi">Bạn đang có phiên đăng nhập trên thiết bị này.</p>
+          <div class="phien-bang__nut">
+            <a class="nut nut--chinh" id="nutTiepTuc" href="../index.html">Tiếp tục</a>
+            <button class="nut nut--ngoc" id="nutDangXuatPhien" type="button">Đăng xuất</button>
+          </div>
+          <button class="nut nut--rong nut--nho phien-bang__doi" id="nutDoiTaiKhoan" type="button">
+            Đăng nhập bằng tài khoản khác
+          </button>
+        </div>
+
+        <div id="khoiForm">
+          <form id="formDangNhap" class="bieu-mau" novalidate>
+            <div class="nhom">
+              <label for="tenDangNhap">Tên đăng nhập</label>
+              <input id="tenDangNhap" class="o-nhap" type="text" autocomplete="username" autocapitalize="none"
+                spellcheck="false" placeholder="Email hoặc số điện thoại">
+            </div>
+
+            <div class="nhom">
+              <label for="matKhau">Mật khẩu</label>
+              <div class="o-mat-khau">
+                <input id="matKhau" class="o-nhap" type="password" autocomplete="current-password"
+                  placeholder="Nhập mật khẩu">
+                <button type="button" class="nut-hien-mk" id="nutHienMatKhau" aria-pressed="false">Hiện</button>
+              </div>
+            </div>
+
+            <div class="hang-giua">
+              <label class="hop-chon">
+                <input type="checkbox" id="ghiNho" checked>
+                Ghi nhớ đăng nhập
+              </label>
+              <button type="button" class="nut nut--rong nut--nho" id="quenMatKhau">Quên mật khẩu?</button>
+            </div>
+
+            <p class="loi" id="loiDangNhap" role="alert" hidden></p>
+
+            <button class="nut nut--chinh nut--toan" id="nutDangNhap" type="submit">Đăng nhập</button>
+          </form>
+
+          <p class="ghi-chu-nho">
+            Chưa có tài khoản? Vui lòng liên hệ chủ trọ hoặc quản lý để được cấp
+            mật khẩu tạm. Bạn sẽ đổi mật khẩu ở lần đăng nhập đầu tiên.
+          </p>
+
+          <details class="tai-khoan-mau">
+            <summary>Tài khoản dùng thử <span>6 tài khoản</span></summary>
+            <p class="tai-khoan-mau__goi-y">Bấm vào một tài khoản để điền nhanh vào biểu mẫu.</p>
+            <div class="tai-khoan-mau__ds">
+              <button type="button" data-ten="admin@ancu.vn" data-mat-khau="12345678">
+                <span>Chủ trọ<small>admin@ancu.vn</small></span><b>Điền</b>
+              </button>
+              <button type="button" data-ten="quanly@ancu.vn" data-mat-khau="12345678">
+                <span>Quản lý<small>quanly@ancu.vn</small></span><b>Điền</b>
+              </button>
+              <button type="button" data-ten="an@ancu.vn" data-mat-khau="12345678">
+                <span>Khách thuê · có phòng<small>an@ancu.vn</small></span><b>Điền</b>
+              </button>
+              <button type="button" data-ten="0923456789@tenant.local" data-mat-khau="Tam@864209">
+                <span>Khách thuê · mật khẩu tạm<small>0923456789@tenant.local</small></span><b>Điền</b>
+              </button>
+              <button type="button" data-ten="mai@ancu.vn" data-mat-khau="12345678">
+                <span>Khách thuê · chưa xếp phòng<small>mai@ancu.vn</small></span><b>Điền</b>
+              </button>
+              <button type="button" data-ten="bich@ancu.vn" data-mat-khau="12345678">
+                <span>Khách thuê · tài khoản khóa<small>bich@ancu.vn</small></span><b>Điền</b>
+              </button>
+            </div>
+            <p class="tai-khoan-mau__luu-y">
+              Dữ liệu dùng thử được lưu trong trình duyệt. Xóa dữ liệu trang web để khôi phục bộ mẫu ban đầu.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../js/dulieu.js"></script>
+  <script src="../js/chung.js"></script>
+  <script src="../js/dangnhap.js"></script>
+</body>
+
+</html>

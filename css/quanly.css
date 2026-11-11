@@ -1,0 +1,17 @@
+/* ============================================================
+   quanly.css — Tinh chỉnh riêng cho trang quản lý vận hành.
+   Kanban thanh toán và thẻ ghi chỉ số cần rõ ràng khi thao tác nhanh.
+   ============================================================ */
+
+.kanban { grid-template-columns: repeat(4, minmax(248px, 1fr)); }
+
+.the-phong__o .o-nhap { font-variant-numeric: tabular-nums; }
+.the-phong__tieu-thu b { font-size: 13px; }
+.the-phong__cuoi .nut { white-space: nowrap; }
+
+/* Trên màn hình hẹp, giữ 4 cột và cho phép cuộn ngang thay vì ép chữ */
+@media (max-width: 1260px) {
+  .kanban { grid-template-columns: repeat(4, 238px); }
+}
+
+.man .the-bang td .so { white-space: nowrap; }
