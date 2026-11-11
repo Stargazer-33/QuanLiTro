@@ -334,8 +334,10 @@ function khoiTaoKhung(cauHinh) {
     document.getElementById('nutDangXuat').onclick = function () {
       hoi('Đăng xuất?', 'Bạn sẽ quay về trang giới thiệu.', 'Đăng xuất').then(function (dongY) {
         if (!dongY) return;
-        DL.dangXuat();
-        location.href = '../index.html';
+        DL.dangXuat().then(function () { location.href = '../index.html'; }).catch(function (loi) {
+          console.error('Đăng xuất thất bại:', loi);
+          thongBao('Không thể đăng xuất khỏi Supabase. Vui lòng thử lại.', 'loi');
+        });
       });
     };
   }
@@ -344,7 +346,10 @@ function khoiTaoKhung(cauHinh) {
   const menu = document.getElementById('menuTrai');
   if (menu) {
     let html = '<div class="menu__dau"><p class="menu__vai-tro">' + TEN_VAI_TRO[nd.vaiTro] + '</p>' +
-      '<p class="menu__ten">' + thoat(nd.hoTen) + '</p></div>';
+      '<p class="menu__ten">' + thoat(nd.hoTen) + '</p>';
+    const coSo = nd.vaiTro === 'quanly' ? DL.coSoCuaPhien() : null;
+    if (coSo) html += '<p class="menu__vai-tro">' + thoat(coSo.ten) + '</p>';
+    html += '</div>';
     cauHinh.menu.forEach(function (nhom) {
       html += '<div class="menu__nhom"><p class="menu__nhan">' + nhom.nhom + '</p>';
       nhom.muc.forEach(function (m) {
@@ -413,9 +418,13 @@ function hienDoiMatKhauBatBuoc(nd) {
     if (moi.length < 8) return baoLoi('Mật khẩu mới phải có ít nhất 8 ký tự.');
     if (moi !== lai) return baoLoi('Hai lần nhập mật khẩu không khớp.');
     if (moi === nd.matKhau) return baoLoi('Mật khẩu mới không được trùng mật khẩu tạm.');
-    DL.doiMatKhau(nd.id, moi);
-    thongBao('Đã đổi mật khẩu. Chào mừng bạn!');
-    setTimeout(function () { location.reload(); }, 500);
+    DL.doiMatKhau(nd.id, moi).then(function () {
+      thongBao('Đã đổi mật khẩu. Chào mừng bạn!');
+      setTimeout(function () { location.reload(); }, 500);
+    }).catch(function (loi) {
+      console.error('Đổi mật khẩu thất bại:', loi);
+      baoLoi('Không thể đổi mật khẩu. Vui lòng thử lại.');
+    });
   };
 }
 

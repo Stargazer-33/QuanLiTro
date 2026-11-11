@@ -24,23 +24,43 @@ function taiKhoanCuaNhanVien(nv) {
 }
 
 /* Cấp tài khoản khách thuê rồi hiện mật khẩu tạm */
-function capTaiKhoanKhach(k, xong) {
-  const kq = DL.capTaiKhoan({
-    hoTen: k.hoTen, email: k.email, sdt: k.sdt,
-    hoSoId: k.id, loaiHoSo: 'khach', vaiTro: 'khachthue'
-  });
-  if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
-  hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, k.hoTen, xong);
+async function capTaiKhoanKhach(k, xong) {
+  try {
+    const kq = await DL.capTaiKhoan({
+      hoTen: k.hoTen, email: k.email, sdt: k.sdt,
+      hoSoId: k.id, loaiHoSo: 'khach', vaiTro: 'khachthue'
+    });
+    if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
+    if (kq.invited) {
+      thongBao('Đã gửi email mời đăng nhập tới ' + k.email + '.');
+      if (xong) xong();
+      return;
+    }
+    hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, k.hoTen, xong);
+  } catch (loi) {
+    console.error('Cấp tài khoản khách thất bại:', loi);
+    thongBao('Không thể gửi lời mời Supabase. Vui lòng thử lại.', 'loi');
+  }
 }
 
 /* Cấp tài khoản nhân viên quản lý */
-function capTaiKhoanNhanVien(nv, xong) {
-  const kq = DL.capTaiKhoan({
-    hoTen: nv.hoTen, email: nv.email, sdt: nv.sdt,
-    hoSoId: nv.id, loaiHoSo: 'nhanvien', vaiTro: 'quanly'
-  });
-  if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
-  hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, nv.hoTen, xong);
+async function capTaiKhoanNhanVien(nv, xong) {
+  try {
+    const kq = await DL.capTaiKhoan({
+      hoTen: nv.hoTen, email: nv.email, sdt: nv.sdt,
+      hoSoId: nv.id, loaiHoSo: 'nhanvien', vaiTro: 'quanly'
+    });
+    if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
+    if (kq.invited) {
+      thongBao('Đã gửi email mời đăng nhập tới ' + nv.email + '.');
+      if (xong) xong();
+      return;
+    }
+    hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, nv.hoTen, xong);
+  } catch (loi) {
+    console.error('Cấp tài khoản quản lý thất bại:', loi);
+    thongBao('Không thể gửi lời mời Supabase. Vui lòng thử lại.', 'loi');
+  }
 }
 
 /* ============================================================
@@ -103,6 +123,7 @@ function vePhong(quyen) {
     return [
       '<strong>' + thoat(p.ma) + '</strong>',
       '<div>' + thoat(p.ten) + '</div><div class="phu">' + thoat(p.khuVuc || 'Chưa xếp khu') + '</div>',
+      (DL.tim('coso', p.coSoId) || {}).ten || '—',
       'Tầng ' + thoat(p.tang),
       thoat(p.dienTich) + ' m²',
       '<span class="so">' + tien(p.gia) + '</span>',
@@ -122,7 +143,7 @@ function vePhong(quyen) {
       { nhan: 'Còn trống', so: dem.trong, lop: 'thong-ke__so--la' },
       { nhan: 'Bảo trì', so: dem.baotri, lop: 'thong-ke__so--do' }
     ]) +
-    bangHtml(['Mã', 'Phòng', 'Tầng', 'Diện tích', 'Giá thuê', 'Khách hiện tại', 'Trạng thái', ''], dong);
+    bangHtml(['Mã', 'Phòng', 'Cơ sở', 'Tầng', 'Diện tích', 'Giá thuê', 'Khách hiện tại', 'Trạng thái', ''], dong);
 
   const oDem = document.getElementById('demPhong');
   if (oDem) oDem.textContent = ds.length + ' / ' + tatCa.length + ' phòng';
@@ -141,6 +162,11 @@ function vePhong(quyen) {
 /* Mở biểu mẫu thêm/sửa phòng */
 function moFormPhong(p, xong) {
   const laSua = !!p;
+  const coSoOptions = DL.lay('coso').map(function (c) {
+    return '<option value="' + thoat(c.id) + '"' +
+      ((laSua && p.coSoId === c.id) || (!laSua && c.id === (DL.coSoCuaPhien() || {}).id) ? ' selected' : '') +
+      '>' + thoat(c.ten) + '</option>';
+  }).join('');
   const lop = moHop({
     tieuDe: laSua ? 'Sửa phòng' : 'Thêm phòng',
     moTa: 'Mã phòng không được trùng. Trạng thái phòng được đồng bộ theo hợp đồng hiệu lực.',
@@ -149,6 +175,7 @@ function moFormPhong(p, xong) {
         '<div class="luoi-nhap">' +
           '<div class="nhom"><label for="fpMa">Mã phòng *</label><input id="fpMa" class="o-nhap" value="' + thoat(laSua ? p.ma : '') + '" placeholder="VD: P104"></div>' +
           '<div class="nhom"><label for="fpTen">Tên phòng *</label><input id="fpTen" class="o-nhap" value="' + thoat(laSua ? p.ten : '') + '" placeholder="VD: Phòng 104"></div>' +
+          '<div class="nhom"><label for="fpCoSo">Cơ sở *</label><select id="fpCoSo" class="o-chon">' + coSoOptions + '</select></div>' +
           '<div class="nhom"><label for="fpTang">Tầng</label><input id="fpTang" type="number" min="0" class="o-nhap" value="' + (laSua ? p.tang : 1) + '"></div>' +
           '<div class="nhom"><label for="fpKhuVuc">Khu vực</label><input id="fpKhuVuc" class="o-nhap" value="' + thoat(laSua ? p.khuVuc : 'Khu A') + '" placeholder="VD: Khu A"></div>' +
           '<div class="nhom"><label for="fpDienTich">Diện tích (m²)</label><input id="fpDienTich" type="number" min="0" class="o-nhap" value="' + (laSua ? p.dienTich : 25) + '"></div>' +
@@ -169,17 +196,26 @@ function moFormPhong(p, xong) {
   document.getElementById('luuPhong').onclick = function () {
     const ma = giaTri('fpMa').toUpperCase();
     const ten = giaTri('fpTen');
-    if (!ma || !ten) { thongBao('Vui lòng nhập mã và tên phòng.', 'loi'); return; }
-    const trung = DL.lay('phong').some(function (x) {
-      return x.ma.toLowerCase() === ma.toLowerCase() && (!laSua || x.id !== p.id);
-    });
+    const coSoId = giaTri('fpCoSo');
+    if (!ma || !ten || !coSoId) { thongBao('Vui lòng nhập mã, tên phòng và chọn cơ sở.', 'loi'); return; }
+    const trung = DL.giaTriDaTonTai('phong', 'ma', ma, laSua ? p.id : null);
     if (trung) { thongBao('Mã phòng này đã tồn tại.', 'loi'); return; }
     const du = {
-      ma: ma, ten: ten, tang: soGiaTri('fpTang'), khuVuc: giaTri('fpKhuVuc'),
+      ma: ma, ten: ten, coSoId: coSoId, tang: soGiaTri('fpTang'), khuVuc: giaTri('fpKhuVuc'),
       dienTich: soGiaTri('fpDienTich'), gia: soGiaTri('fpGia'),
       trangThai: giaTri('fpTrangThai') || 'trong', ghiChu: giaTri('fpGhiChu')
     };
     if (du.gia < 0 || du.dienTich < 0) { thongBao('Diện tích và giá thuê không được âm.', 'loi'); return; }
+    if (laSua && coSoId !== p.coSoId && (
+      DL.giaTriDaTonTai('khach', 'phongId', p.id) ||
+      DL.giaTriDaTonTai('hopdong', 'phongId', p.id) ||
+      DL.giaTriDaTonTai('hoadon', 'phongId', p.id) ||
+      DL.giaTriDaTonTai('chiso', 'phongId', p.id) ||
+      DL.giaTriDaTonTai('suco', 'phongId', p.id)
+    )) {
+      thongBao('Không thể chuyển cơ sở vì phòng đã có hồ sơ khách hoặc dữ liệu vận hành.', 'loi');
+      return;
+    }
     if (laSua) DL.sua('phong', p.id, du);
     else DL.them('phong', du);
     dongHop();
@@ -313,8 +349,9 @@ function veKhach(quyen) {
 }
 
 /* Danh sách phòng cho ô chọn */
-function tuyChonPhong(dangChon) {
+function tuyChonPhong(dangChon, coSoId) {
   return '<option value="">— Chưa xếp phòng —</option>' + DL.lay('phong')
+    .filter(function (p) { return !coSoId || p.coSoId === coSoId; })
     .slice().sort(function (a, b) { return a.ma.localeCompare(b.ma); })
     .map(function (p) {
       return '<option value="' + p.id + '"' + (p.id === dangChon ? ' selected' : '') + '>' +
@@ -325,6 +362,12 @@ function tuyChonPhong(dangChon) {
 /* Mở biểu mẫu thêm/sửa khách */
 function moFormKhach(k, xong, quyen) {
   const laSua = !!k;
+  const coSoPhien = DL.coSoCuaPhien();
+  const coSoMacDinh = laSua ? k.coSoId : (coSoPhien ? coSoPhien.id : ((DL.lay('coso')[0] || {}).id || ''));
+  const luaChonCoSo = DL.lay('coso').map(function (c) {
+    return '<option value="' + thoat(c.id) + '"' + (c.id === coSoMacDinh ? ' selected' : '') + '>' +
+      thoat(c.ten) + '</option>';
+  }).join('');
   const lop = moHop({
     rong: true,
     tieuDe: laSua ? 'Sửa hồ sơ khách thuê' : 'Thêm khách thuê',
@@ -340,7 +383,8 @@ function moFormKhach(k, xong, quyen) {
           '<div class="nhom"><label for="fkDiaChi">Địa chỉ thường trú</label><input id="fkDiaChi" class="o-nhap" value="' + thoat(laSua ? k.diaChi : '') + '"></div>' +
         '</div></div>' +
         '<div class="nhom-thong-tin"><h3>Phòng và trạng thái</h3><div class="luoi-nhap">' +
-          '<div class="nhom"><label for="fkPhong">Phòng đang ở</label><select id="fkPhong" class="o-chon">' + tuyChonPhong(laSua ? k.phongId : '') + '</select></div>' +
+          '<div class="nhom"><label for="fkCoSo">Cơ sở phụ trách *</label><select id="fkCoSo" class="o-chon">' + luaChonCoSo + '</select></div>' +
+          '<div class="nhom"><label for="fkPhong">Phòng đang ở</label><select id="fkPhong" class="o-chon">' + tuyChonPhong(laSua ? k.phongId : '', coSoMacDinh) + '</select></div>' +
           '<div class="nhom"><label for="fkNgayVao">Ngày vào ở</label><input id="fkNgayVao" type="date" class="o-nhap" value="' + thoat(laSua ? k.ngayVao : homNay()) + '"></div>' +
           '<div class="nhom"><label for="fkTrangThai">Trạng thái</label><select id="fkTrangThai" class="o-chon">' +
             '<option value="dangthue"' + (!laSua || k.trangThai === 'dangthue' ? ' selected' : '') + '>Đang thuê</option>' +
@@ -357,21 +401,32 @@ function moFormKhach(k, xong, quyen) {
       '<button class="nut nut--chinh" id="luuKhach">' + (laSua ? 'Lưu thay đổi' : 'Thêm khách') + '</button>'
   });
 
+  document.getElementById('fkCoSo').onchange = function () {
+    const phong = DL.tim('phong', giaTri('fkPhong'));
+    const phongId = phong && phong.coSoId === giaTri('fkCoSo') ? phong.id : '';
+    document.getElementById('fkPhong').innerHTML = tuyChonPhong(phongId, giaTri('fkCoSo'));
+  };
+
   document.getElementById('luuKhach').onclick = function () {
     const hoTen = giaTri('fkHoTen');
     const sdt = giaTri('fkSdt');
     if (!hoTen || !sdt) { thongBao('Vui lòng nhập họ tên và số điện thoại.', 'loi'); return; }
-    const trungSdt = DL.lay('khach').some(function (x) {
-      return x.sdt === sdt && (!laSua || x.id !== k.id);
-    });
+    const trungSdt = DL.giaTriDaTonTai('khach', 'sdt', sdt, laSua ? k.id : null);
     if (trungSdt) { thongBao('Số điện thoại này đã có trong hồ sơ khách khác.', 'loi'); return; }
 
     const phongId = giaTri('fkPhong');
+    const coSoId = giaTri('fkCoSo');
+    const phong = phongId ? DL.tim('phong', phongId) : null;
+    if (!coSoId || !DL.tim('coso', coSoId)) { thongBao('Vui lòng chọn cơ sở phụ trách.', 'loi'); return; }
+    if (phongId && (!phong || phong.coSoId !== coSoId)) {
+      thongBao('Phòng đã chọn không thuộc cơ sở phụ trách.', 'loi');
+      return;
+    }
     const ngayVao = giaTri('fkNgayVao');
     const trangThai = giaTri('fkTrangThai');
     const du = {
       hoTen: hoTen, sdt: sdt, cccd: giaTri('fkCccd'), email: giaTri('fkEmail').toLowerCase(),
-      queQuan: giaTri('fkQueQuan'), diaChi: giaTri('fkDiaChi'), phongId: phongId,
+      queQuan: giaTri('fkQueQuan'), diaChi: giaTri('fkDiaChi'), phongId: phongId, coSoId: coSoId,
       ngayVao: phongId ? ngayVao : '', trangThai: trangThai, ghiChu: giaTri('fkGhiChu')
     };
 
@@ -379,7 +434,7 @@ function moFormKhach(k, xong, quyen) {
     if (laSua) {
       hoSo = DL.sua('khach', k.id, du);
     } else {
-      du.ma = 'K-' + String(DL.lay('khach').length + 1).padStart(3, '0');
+      du.ma = 'K-' + String(DL.soBanGhiToanBo('khach') + 1).padStart(3, '0');
       hoSo = DL.them('khach', du);
     }
 
@@ -425,7 +480,9 @@ function moTaiKhoanKhach(k, xong) {
         '<p>Trạng thái: ' + nhanTaiKhoan(u) + '</p></div>' +
         (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Khách đã tự đổi mật khẩu') + '</p></div>' : '') +
       '</div>' +
-      '<p class="ghi-chu-nho">Mật khẩu tạm chỉ hiển thị một lần. Khách sẽ buộc đổi mật khẩu ở lần đăng nhập kế tiếp.</p>',
+      '<p class="ghi-chu-nho">' + (DL.cheDoSupabase
+        ? 'Khách thuê kích hoạt tài khoản qua liên kết gửi tới email.'
+        : 'Mật khẩu tạm chỉ hiển thị một lần. Khách sẽ buộc đổi mật khẩu ở lần đăng nhập kế tiếp.') + '</p>',
     chanTrang:
       (u
         ? '<button class="nut nut--ngoc" data-dong>Đóng</button>' +
@@ -436,22 +493,22 @@ function moTaiKhoanKhach(k, xong) {
   });
 
   if (!u) {
-    document.getElementById('tkCap').onclick = function () {
-      const kq = DL.capTaiKhoan({
-        hoTen: k.hoTen, email: k.email, sdt: k.sdt,
-        hoSoId: k.id, loaiHoSo: 'khach', vaiTro: 'khachthue'
-      });
-      if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
-      hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, k.hoTen, lamMoi);
-    };
+    document.getElementById('tkCap').onclick = function () { capTaiKhoanKhach(k, lamMoi); };
     return;
   }
 
   document.getElementById('tkDatLai').onclick = async function () {
-    const dongY = await hoi('Đặt lại mật khẩu?', 'Mật khẩu hiện tại sẽ bị thay bằng mật khẩu tạm mới.', 'Đặt lại');
+    const dongY = await hoi('Đặt lại mật khẩu?', DL.cheDoSupabase
+      ? 'Một liên kết đặt mật khẩu mới sẽ được gửi tới email của khách thuê.'
+      : 'Mật khẩu hiện tại sẽ bị thay bằng mật khẩu tạm mới.', 'Đặt lại');
     if (!dongY) return;
-    const mk = DL.datLaiMatKhau(u.id);
-    hienMatKhauTam(u.tenDangNhap, mk, k.hoTen, lamMoi);
+    try {
+      await DL.datLaiMatKhau(u.id);
+      thongBao('Đã gửi email đặt lại mật khẩu tới ' + u.tenDangNhap + '.');
+    } catch (loi) {
+      console.error('Gửi email đặt lại mật khẩu thất bại:', loi);
+      thongBao('Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.', 'loi');
+    }
   };
 
   document.getElementById('tkKhoa').onclick = async function () {
@@ -751,7 +808,7 @@ function moFormHopDong(quyen, xong) {
     return;
   }
 
-  const soThuTu = String(DL.lay('hopdong').length + 1).padStart(3, '0');
+  const soThuTu = String(DL.soBanGhiToanBo('hopdong') + 1).padStart(3, '0');
   const maGoiY = 'HĐ-' + new Date().getFullYear() + '-' + soThuTu;
   const hdMau = DL.lay('hopdong')[0] || {};
   const dvDien = DL.lay('dichvu').find(function (d) { return d.ten === 'Điện'; });
@@ -904,7 +961,7 @@ function moFormHopDong(quyen, xong) {
     if (!phongId || !khachId || !batDau) { thongBao('Vui lòng chọn phòng, khách và ngày bắt đầu.', 'loi'); return; }
     if (!ketThuc || ketThuc < batDau) { thongBao('Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.', 'loi'); return; }
     if (DL.hopDongHieuLuc(phongId)) { thongBao('Phòng này đang có hợp đồng hiệu lực.', 'loi'); return; }
-    if (DL.lay('hopdong').some(function (h) { return h.ma.toLowerCase() === ma.toLowerCase(); })) {
+    if (DL.giaTriDaTonTai('hopdong', 'ma', ma)) {
       thongBao('Mã hợp đồng đã tồn tại.', 'loi'); return;
     }
     const tienThue = soGiaTri('fhTienThue');
@@ -947,7 +1004,10 @@ function moFormHopDong(quyen, xong) {
 
     DL.them('hopdong', du);
     DL.sua('phong', phongId, { trangThai: 'dangthue' });
-    if (khach) DL.sua('khach', khachId, { phongId: phongId, ngayVao: batDau, trangThai: 'dangthue' });
+    if (khach) DL.sua('khach', khachId, {
+      phongId: phongId, coSoId: (DL.tim('phong', phongId) || {}).coSoId,
+      ngayVao: batDau, trangThai: 'dangthue'
+    });
     DL.dongBoPhong();
 
     dongHop();
@@ -1604,7 +1664,7 @@ function moFormSuCo(xong) {
     if (tieuDe.length > 120) { thongBao('Tiêu đề tối đa 120 ký tự.', 'loi'); return; }
     const hd = DL.hopDongHieuLuc(phongId);
     const k = hd ? DL.tim('khach', hd.khachId) : null;
-    const soTiepTheo = String(DL.lay('suco').length + 1).padStart(4, '0');
+    const soTiepTheo = String(DL.soBanGhiToanBo('suco') + 1).padStart(4, '0');
     DL.them('suco', {
       ma: 'SC-' + soTiepTheo, phongId: phongId, khachId: k ? k.id : '',
       tieuDe: tieuDe, phanLoai: giaTri('scPhanLoai'), mucDo: giaTri('scMucDo'),
@@ -1717,9 +1777,15 @@ function manTaiKhoan(quyen) {
             ['Tên đăng nhập', '<span class="ma-don">' + thoat(nd.tenDangNhap) + '</span>']].concat(moTaHoSo)) +
           '<div class="vach"></div>' +
           '<button class="nut nut--ngoc" id="nutDangXuatTk">Đăng xuất</button>' +
-          (quyen.khoiPhucDuLieu
+          (quyen.khoiPhucDuLieu && !DL.cheDoSupabase
             ? '<div class="vach"></div><p class="ghi-chu-nho">Dữ liệu demo được lưu trên trình duyệt. Có thể khôi phục về bộ dữ liệu mẫu ban đầu.</p>' +
               '<button class="nut nut--xoa" id="nutKhoiPhuc" style="margin-top:8px">Khôi phục dữ liệu mẫu</button>'
+            : '') +
+          (quyen.khoiPhucDuLieu && DL.cheDoSupabase
+            ? '<div class="vach"></div><p class="ghi-chu-nho">Để thử ứng dụng, nạp bộ dữ liệu mẫu (cơ sở, phòng, khách, hợp đồng, hóa đơn và thanh toán). Chỉ nạp khi Supabase chưa có dữ liệu.</p>' +
+              '<button class="nut nut--chinh" id="nutNapDuLieuMau" style="margin-top:8px">Nạp dữ liệu mẫu</button>' +
+              '<p class="ghi-chu-nho" style="margin-top:12px">Hoặc nhập dữ liệu cũ đã lưu trên trình duyệt.</p>' +
+              '<button class="nut nut--ngoc" id="nutNhapDuLieuCu" style="margin-top:8px">Nhập dữ liệu cũ</button>'
             : '') +
         '</div>' +
         '<div class="the">' +
@@ -1738,8 +1804,10 @@ function manTaiKhoan(quyen) {
   document.getElementById('nutDangXuatTk').onclick = function () {
     hoi('Đăng xuất?', 'Bạn sẽ quay về trang giới thiệu.', 'Đăng xuất').then(function (dongY) {
       if (!dongY) return;
-      DL.dangXuat();
-      location.href = '../index.html';
+      DL.dangXuat().then(function () { location.href = '../index.html'; }).catch(function (loi) {
+        console.error('Đăng xuất thất bại:', loi);
+        thongBao('Không thể đăng xuất khỏi Supabase. Vui lòng thử lại.', 'loi');
+      });
     });
   };
 
@@ -1754,21 +1822,61 @@ function manTaiKhoan(quyen) {
     };
   }
 
-  document.getElementById('luuDoiTk').onclick = function () {
+  const nutNhapCu = document.getElementById('nutNhapDuLieuCu');
+  if (nutNhapCu) {
+    nutNhapCu.onclick = async function () {
+      const dongY = await hoi('Nhập dữ liệu cũ?', 'Các bản ghi hiện có trong trình duyệt sẽ được thêm vào Supabase. Không nhập chồng dữ liệu đã có.', 'Nhập dữ liệu');
+      if (!dongY) return;
+      try {
+        const soLuong = await DL.nhapDuLieuCu();
+        thongBao('Đã nhập ' + soLuong + ' bản ghi vào Supabase.');
+        location.reload();
+      } catch (loi) {
+        console.error('Nhập dữ liệu cũ thất bại:', loi);
+        thongBao(loi.message || 'Không thể nhập dữ liệu cũ.', 'loi');
+      }
+    };
+  }
+
+  const nutNapMau = document.getElementById('nutNapDuLieuMau');
+  if (nutNapMau) {
+    nutNapMau.onclick = async function () {
+      const dongY = await hoi(
+        'Nạp dữ liệu mẫu?',
+        'Tạo dữ liệu demo cho hai cơ sở với phòng, khách thuê, hợp đồng, hóa đơn, thanh toán và chi phí. Không tạo tài khoản đăng nhập demo. Chỉ nạp được khi Supabase chưa có dữ liệu.',
+        'Nạp dữ liệu mẫu'
+      );
+      if (!dongY) return;
+      nutNapMau.disabled = true;
+      try {
+        const soLuong = await DL.napDuLieuMau();
+        thongBao('Đã nạp ' + soLuong + ' bản ghi mẫu vào Supabase.');
+        location.reload();
+      } catch (loi) {
+        console.error('Nạp dữ liệu mẫu thất bại:', loi);
+        thongBao(loi.message || 'Không thể nạp dữ liệu mẫu.', 'loi');
+        nutNapMau.disabled = false;
+      }
+    };
+  }
+
+  document.getElementById('luuDoiTk').onclick = async function () {
     const hienTai = giaTri('mkHienTai');
     const moi = giaTri('mkMoiTk');
     const lai = giaTri('mkLaiTk');
     const loi = document.getElementById('loiDoiTk');
     function baoLoi(chu) { loi.hidden = false; loi.textContent = chu; }
     loi.hidden = true;
-    if (hienTai !== nd.matKhau) return baoLoi('Mật khẩu hiện tại không đúng.');
     if (moi.length < 8) return baoLoi('Mật khẩu mới phải có ít nhất 8 ký tự.');
     if (moi !== lai) return baoLoi('Hai lần nhập mật khẩu mới không khớp.');
-    DL.doiMatKhau(nd.id, moi);
-    thongBao('Đã đổi mật khẩu thành công.');
-    document.getElementById('formDoiMatKhau').reset();
+    try {
+      if (!await DL.xacThucMatKhau(nd.id, hienTai)) return baoLoi('Mật khẩu hiện tại không đúng.');
+      await DL.doiMatKhau(nd.id, moi);
+      thongBao('Đã đổi mật khẩu thành công.');
+      document.getElementById('formDoiMatKhau').reset();
+    } catch (loi) {
+      console.error('Đổi mật khẩu thất bại:', loi);
+      baoLoi('Không thể đổi mật khẩu. Vui lòng thử lại.');
+    }
   };
 }
-
-
-

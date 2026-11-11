@@ -123,19 +123,19 @@ function capNhatNam() {
 
 /* Khởi động trang giới thiệu */
 document.addEventListener('DOMContentLoaded', function () {
-  try {
+  DL.sanSang.then(function () {
     const phong = DL.lay('phong');
     capNhatThongKe(phong);
     vePhongTrong();
     veBangGia();
     capNhatLoiVao();
     capNhatNam();
-  } catch (e) {
-    console.error('Không tải được trang giới thiệu:', e);
+  }).catch(function (loi) {
+    console.error('Không tải được trang giới thiệu:', loi);
     const khu = document.getElementById('danhSachPhongTrong');
     if (khu) {
-      khu.innerHTML = '<div class="the-trong-toi">Không tải được dữ liệu phòng. ' +
-        'Vui lòng tải lại trang.</div>';
+      khu.innerHTML = '<div class="the-trong-toi">Không tải được dữ liệu từ máy chủ. ' +
+        'Vui lòng kiểm tra kết nối và tải lại trang.</div>';
     }
-  }
+  });
 });

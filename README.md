@@ -1,8 +1,8 @@
 # L.Maria · Hệ thống quản lý phòng trọ
 
-Ứng dụng quản lý nhà trọ thuần **HTML, CSS, JavaScript**, không có backend và không cần
-cài đặt thư viện. Toàn bộ dữ liệu được lưu trong `localStorage` của trình duyệt, nên có thể
-chạy hoàn toàn offline sau khi tải trang.
+Ứng dụng quản lý nhà trọ thuần **HTML, CSS, JavaScript**. Khi có cấu hình trong
+`js/supabase-config.js`, đăng nhập và dữ liệu nghiệp vụ dùng Supabase Auth/Postgres.
+Không có cấu hình thì ứng dụng chạy bằng dữ liệu mẫu localStorage.
 
 ## Cách chạy
 
@@ -21,24 +21,29 @@ Sau đó mở `http://localhost:8000/`.
 Cũng có thể mở trực tiếp `index.html` bằng trình duyệt. Lưu ý mỗi trình duyệt có thể
 quản lý `localStorage` của trang `file://` theo cách khác nhau; dùng static server sẽ ổn định hơn.
 
-## Tài khoản dùng thử
+## Tài khoản mẫu local
+
+Các tài khoản bên dưới chỉ dùng khi chạy chế độ localStorage. Chúng không phải người dùng
+Supabase Auth và không hoạt động khi cấu hình Supabase đã bật.
 
 | Vai trò | Tên đăng nhập | Mật khẩu | Ghi chú |
 |---|---|---|---|
 | Chủ trọ | `admin@ancu.vn` | `12345678` | Toàn quyền quản lý |
-| Quản lý | `quanly@ancu.vn` | `12345678` | Vận hành hằng ngày |
+| Quản lý | `quanly@ancu.vn` | `12345678` | Phụ trách cơ sở Khu A |
+| Quản lý | `quanly.b@ancu.vn` | `12345678` | Phụ trách cơ sở Khu B |
 | Khách thuê | `an@ancu.vn` | `12345678` | Đang ở phòng P101 |
 | Khách thuê | `0923456789@tenant.local` | `Tam@864209` | Mật khẩu tạm, buộc đổi khi đăng nhập |
 | Khách thuê | `mai@ancu.vn` | `12345678` | Chưa được xếp phòng |
 | Khách thuê | `bich@ancu.vn` | `12345678` | Tài khoản đang bị khóa |
 
-Trang đăng nhập có danh sách tài khoản mẫu; bấm vào một dòng để điền nhanh.
+Trang đăng nhập ẩn danh sách tài khoản mẫu khi chạy ở chế độ Supabase.
 
 ## Cấu trúc
 
 ```
 index.html                 Trang giới thiệu
 html/dangnhap.html         Đăng nhập
+html/datlaimatkhau.html    Đặt mật khẩu qua liên kết email Supabase
 html/admin.html            Trang chủ trọ
 html/quanly.html           Trang quản lý
 html/khachthue.html        Trang khách thuê
@@ -66,17 +71,75 @@ thay nội dung trong `<main id="noidung">`.
 ## Chức năng chính
 
 - **Chủ trọ:** tổng quan, nhân viên và tài khoản, phòng, khách thuê, hợp đồng, giá dịch vụ,
-  hóa đơn và thanh toán, sự cố, thông báo, báo cáo doanh thu, công nợ, chi phí.
+  cơ sở, hóa đơn và thanh toán, sự cố, thông báo, báo cáo doanh thu, công nợ, chi phí.
 - **Quản lý:** phòng, khách thuê, hợp đồng, ghi chỉ số điện nước, tạo hóa đơn, gửi link hóa đơn,
-  Kanban thanh toán, xử lý sự cố, tài khoản cá nhân.
+  Kanban thanh toán, xử lý sự cố, tài khoản cá nhân; chỉ xem và vận hành cơ sở được chủ trọ phân công.
 - **Khách thuê:** tổng quan, hóa đơn và thông tin chuyển khoản, hợp đồng và in hợp đồng,
   chỉ số điện nước, thông báo, gửi sự cố, thành viên ở cùng, thông tin cá nhân, đổi mật khẩu.
 
-Các ràng buộc nghiệp vụ được xử lý trong `js/dulieu.js` và từng màn hình: mã phòng không trùng,
+Chủ trọ có thể quản lý nhiều cơ sở; mỗi cơ sở được gán tối đa một quản lý và một quản lý chỉ phụ trách
+một cơ sở. Khi tạo phòng hoặc hồ sơ khách thuê, chọn cơ sở tương ứng. Các ràng buộc nghiệp vụ được
+xử lý trong `js/dulieu.js` và từng màn hình: mã phòng không trùng,
 mỗi phòng một hợp đồng hiệu lực, mỗi phòng một hóa đơn mỗi kỳ, không thu vượt số nợ, hóa đơn
 đã có thanh toán thì không xóa, khách thuê chỉ thấy dữ liệu của mình.
 
-## Đặt lại dữ liệu mẫu
+## Backend Supabase
+
+Migration nền tảng nằm tại
+[`supabase/migrations/202611110001_initial_backend.sql`](./supabase/migrations/202611110001_initial_backend.sql).
+Migration tạo profile người dùng, bảng dữ liệu JSONB, ràng buộc cơ bản và Row Level Security
+cho chủ trọ, quản lý cơ sở, khách thuê. Không chạy lại trên project đã có các bảng này.
+Sau đó chạy một lần migration
+[`supabase/migrations/202611110002_profile_self_update.sql`](./supabase/migrations/202611110002_profile_self_update.sql)
+để cho phép user đặt lại cờ đổi mật khẩu mà không cấp quyền sửa vai trò/hồ sơ liên kết.
+Cuối cùng chạy
+[`supabase/migrations/202611110003_secure_profile_updates.sql`](./supabase/migrations/202611110003_secure_profile_updates.sql)
+để chỉ cho phép chủ trọ cập nhật trạng thái hồ sơ của nhân viên/khách thuê; user chỉ tự bỏ cờ
+bắt buộc đổi mật khẩu sau khi đã đổi mật khẩu thành công.
+
+Nếu chưa cài database, chạy migration một lần trong **Supabase → SQL Editor**. Tạo người dùng
+chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo profile theo hướng dẫn trong
+[`supabase/bootstrap_owner.sql`](./supabase/bootstrap_owner.sql). Nếu profile đã tạo và đăng nhập
+được thì bỏ qua các bước này.
+
+### Cấu hình frontend và mời người dùng
+
+1. `js/supabase-config.js` chứa Project URL và publishable key công khai. Với project khác, thay
+   hai giá trị bằng **Project URL** và **anon/public/publishable key** trong Supabase.
+   Không bao giờ đưa `service_role` hoặc secret key vào file frontend.
+2. Dùng static server (không mở trang bằng `file://`). Trong Supabase, mở **Authentication →
+   URL Configuration** và thêm địa chỉ trang đăng nhập cùng trang đặt lại mật khẩu vào
+   **Redirect URLs**, ví dụ `http://localhost:8000/html/dangnhap.html` và
+   `http://localhost:8000/html/datlaimatkhau.html`. Khi deploy, thêm hai URL tương ứng trên domain thật.
+3. Cài Supabase CLI, mở terminal tại thư mục dự án, liên kết project và deploy Edge Function:
+
+   ```text
+   supabase login
+   supabase link --project-ref <project-ref>
+   supabase functions deploy invite-user
+   ```
+
+   Project ref nằm trong Project URL. Function xác minh người gọi là chủ trọ đang hoạt động,
+   gửi email mời qua Supabase Auth và tạo profile; service-role key chỉ được dùng phía Supabase,
+   không đặt trong mã nguồn.
+4. Cấu hình SMTP gửi email trong Supabase trước khi dùng thật. Giới hạn email mặc định của
+   Supabase chỉ phù hợp thử nghiệm; người được mời cần mở email và đặt mật khẩu.
+5. Đăng nhập bằng tài khoản chủ trọ đã tạo. Để thử ứng dụng khi chưa có dữ liệu thật, mở
+   **Tài khoản → Nạp dữ liệu mẫu** hoặc chạy
+   [`supabase/seed_mock_data.sql`](./supabase/seed_mock_data.sql) trong SQL Editor. Script SQL chỉ
+   chạy khi có đúng một chủ trọ đang hoạt động và chủ trọ đó chưa có bản ghi nghiệp vụ; script sẽ
+   từ chối nếu đã có dữ liệu để tránh trộn dữ liệu mẫu với dữ liệu thật. Dữ liệu mẫu không tạo
+   tài khoản Supabase Auth; chỉ tài khoản chủ trọ hiện có đăng nhập được. Muốn thử vai trò quản lý
+   hoặc khách thuê, hãy mời họ bằng email có thể nhận thư. Nếu có dữ liệu cũ trong localStorage,
+   dùng riêng nút **Nhập dữ liệu cũ**.
+6. Thêm cơ sở, hồ sơ quản lý/khách thuê và mời họ bằng email. Mỗi quản lý phải được phân công
+   vào một cơ sở trước khi gửi lời mời.
+
+Tạo mới một project không tự động áp dụng migration; kiểm tra trong SQL Editor và không chạy
+lặp lại nếu schema đã tồn tại. Kiểm tra đăng nhập, mời user và phân quyền bằng từng vai trò
+trước khi đưa dữ liệu thật vào.
+
+## Xóa dữ liệu mẫu local
 
 Mở DevTools → Console và chạy:
 
@@ -90,8 +153,10 @@ trong `js/dulieu.js` ở lần tải tiếp theo.
 
 ## Ghi chú kỹ thuật
 
-- Không dùng framework, TypeScript, npm, build hay code chạy trên server.
-- Mật khẩu trong bộ dữ liệu mẫu chỉ phục vụ minh họa và được lưu dạng văn bản trong
-  `localStorage`. Khi triển khai thật, cần thay lớp dữ liệu bằng backend có xác thực và mã hóa.
-- Lớp dữ liệu được tách riêng trong `js/dulieu.js` để có thể thay bằng API/Supabase sau này
-  mà không phải sửa toàn bộ giao diện.
+- Không dùng framework hoặc build frontend; SDK Supabase được tải từ CDN.
+- Tài khoản demo cũ chỉ là dữ liệu minh họa trong `localStorage`; không sử dụng mật khẩu demo
+  trên Supabase hoặc môi trường thật.
+- Dữ liệu cũ được nâng cấp tự động: các phòng hiện có được gán vào một cơ sở chính để giữ nguyên
+  hoạt động; chủ trọ có thể tạo thêm cơ sở và phân công quản lý trong mục **Cơ sở**.
+- Lớp dữ liệu và Supabase Auth nằm trong `js/dulieu.js`; phân quyền dữ liệu cần tiếp tục được
+  kiểm thử trên Supabase bằng từng vai trò trước khi triển khai thật.

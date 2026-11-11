@@ -89,6 +89,17 @@ function ganQuenMatKhau() {
   if (!nut) return;
 
   nut.addEventListener('click', function () {
+    if (DL.cheDoSupabase) {
+      const email = window.prompt('Nhập email tài khoản để nhận liên kết đặt lại mật khẩu:');
+      if (!email) return;
+      DL.guiEmailDatLai(email).then(function () {
+        thongBao('Nếu email tồn tại trong hệ thống, liên kết đặt lại mật khẩu sẽ được gửi.');
+      }).catch(function (loi) {
+        console.error('Gửi email đặt lại mật khẩu thất bại:', loi);
+        hienLoiDangNhap('Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại sau.');
+      });
+      return;
+    }
     moHop({
       tieuDe: 'Quên mật khẩu?',
       moTa: 'Hệ thống không tự gửi email đặt lại mật khẩu.',
@@ -104,6 +115,12 @@ function ganQuenMatKhau() {
 
 /* Điền nhanh tài khoản mẫu vào biểu mẫu */
 function ganTaiKhoanMau() {
+  if (DL.cheDoSupabase) {
+    const danhSach = document.querySelector('.tai-khoan-mau');
+    if (danhSach) danhSach.hidden = true;
+    const ghiChu = document.querySelector('#khoiForm .ghi-chu-nho');
+    if (ghiChu) ghiChu.textContent = 'Tài khoản Supabase được chủ trọ hoặc quản lý mời qua email. Mở liên kết trong email để kích hoạt và đặt mật khẩu.';
+  }
   document.querySelectorAll('[data-ten][data-mat-khau]').forEach(function (nut) {
     nut.addEventListener('click', function () {
       const oTen = document.getElementById('tenDangNhap');
@@ -122,7 +139,7 @@ function ganDangNhap() {
   const form = document.getElementById('formDangNhap');
   if (!form) return;
 
-  form.addEventListener('submit', function (e) {
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
     anLoiDangNhap();
 
@@ -132,7 +149,14 @@ function ganDangNhap() {
     if (!matKhau) { hienLoiDangNhap('Vui lòng nhập mật khẩu.'); return; }
 
     const ghiNho = document.getElementById('ghiNho');
-    const ketQua = DL.dangNhap(ten, matKhau, ghiNho ? ghiNho.checked : false);
+    let ketQua;
+    try {
+      ketQua = await DL.dangNhap(ten, matKhau, ghiNho ? ghiNho.checked : false);
+    } catch (loi) {
+      console.error('Đăng nhập Supabase thất bại:', loi);
+      hienLoiDangNhap('Không kết nối được máy chủ. Vui lòng thử lại.');
+      return;
+    }
 
     if (!ketQua.ok) {
       hienLoiDangNhap(ketQua.loi);
@@ -164,8 +188,10 @@ function ganPhienDangNhap() {
     nutDangXuat.addEventListener('click', function () {
       hoi('Đăng xuất?', 'Bạn sẽ quay lại biểu mẫu đăng nhập.', 'Đăng xuất').then(function (dongY) {
         if (!dongY) return;
-        DL.dangXuat();
-        location.reload();
+        DL.dangXuat().then(function () { location.reload(); }).catch(function (loi) {
+          console.error('Đăng xuất thất bại:', loi);
+          hienLoiDangNhap('Không thể đăng xuất khỏi Supabase. Vui lòng thử lại.');
+        });
       });
     });
   }
@@ -173,24 +199,30 @@ function ganPhienDangNhap() {
   const nutDoi = document.getElementById('nutDoiTaiKhoan');
   if (nutDoi) {
     nutDoi.addEventListener('click', function () {
-      DL.dangXuat();
-      location.reload();
+      DL.dangXuat().then(function () { location.reload(); }).catch(function (loi) {
+        console.error('Đăng xuất thất bại:', loi);
+        hienLoiDangNhap('Không thể đăng xuất khỏi Supabase. Vui lòng thử lại.');
+      });
     });
   }
 }
 
 /* Khởi động trang đăng nhập */
 document.addEventListener('DOMContentLoaded', function () {
-  ganHienMatKhau();
-  ganQuenMatKhau();
-  ganTaiKhoanMau();
-  ganDangNhap();
-  ganPhienDangNhap();
-  hienPhienDangNhap();
+  DL.sanSang.then(function () {
+    ganHienMatKhau();
+    ganQuenMatKhau();
+    ganTaiKhoanMau();
+    ganDangNhap();
+    ganPhienDangNhap();
+    hienPhienDangNhap();
 
-  /* Đưa con trỏ vào ô đầu tiên khi chưa có phiên */
-  if (!DL.phien()) {
-    const o = document.getElementById('tenDangNhap');
-    if (o) o.focus();
-  }
+    if (!DL.phien()) {
+      const o = document.getElementById('tenDangNhap');
+      if (o) o.focus();
+    }
+  }).catch(function (loi) {
+    console.error('Khởi tạo Supabase thất bại:', loi);
+    hienLoiDangNhap('Không thể kết nối Supabase. Kiểm tra cấu hình Project URL/key và thử lại.');
+  });
 });

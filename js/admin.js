@@ -19,6 +19,7 @@ const MENU_ADMIN = [
     { id: 'dichvu', ten: 'Giá dịch vụ' }
   ] },
   { nhom: 'Hệ thống', muc: [
+    { id: 'coso', ten: 'Cơ sở' },
     { id: 'nhansu', ten: 'Nhân viên' },
     { id: 'thongbao', ten: 'Thông báo' },
     { id: 'taikhoan', ten: 'Tài khoản' }
@@ -77,6 +78,7 @@ function manTongQuan() {
       dauMan('Tổng quan', 'Tình hình nhà trọ trong tháng ' + kyDep(thang) + '.',
         '<button class="nut nut--chinh" data-di="hoadon">Lập hóa đơn</button>') +
       luoiThongKe([
+        { nhan: 'Cơ sở', so: DL.lay('coso').length, ghiChu: 'Mỗi cơ sở có một quản lý' },
         { nhan: 'Tổng phòng', so: phong.length, ghiChu: soDangThue + ' đang thuê · ' + soTrong + ' trống' },
         { nhan: 'Khách đang thuê', so: soKhach, ghiChu: 'Tổng ' + khach.length + ' hồ sơ khách' },
         { nhan: 'Nhân viên', so: nhanvien.length, ghiChu: 'Quản lý, kế toán, kỹ thuật' },
@@ -223,9 +225,14 @@ function moFormNhanVien(nv, xong) {
     if (DL.lay('nhanvien').some(function (x) { return x.email.toLowerCase() === email && (!laSua || x.id !== nv.id); })) {
       thongBao('Email này đã được dùng cho nhân viên khác.', 'loi'); return;
     }
+    const chucVu = giaTri('nvChucVu');
+    if (laSua && chucVu !== nv.chucVu && DL.lay('coso').some(function (c) { return c.quanLyId === nv.id; })) {
+      thongBao('Hãy phân công lại cơ sở trước khi đổi chức vụ quản lý.', 'loi');
+      return;
+    }
     const du = {
       hoTen: hoTen, sdt: sdt, email: email,
-      chucVu: giaTri('nvChucVu'), khuVuc: giaTri('nvKhuVuc'), ngayVao: giaTri('nvNgayVao')
+      chucVu: chucVu, khuVuc: giaTri('nvKhuVuc'), ngayVao: giaTri('nvNgayVao')
     };
     if (laSua) {
       DL.sua('nhanvien', nv.id, du);
@@ -246,6 +253,14 @@ function moTaiKhoanNhanVien(nv, xong) {
   if (!nv) return;
   const u = taiKhoanCuaNhanVien(nv);
   const ten = u ? u.tenDangNhap : nv.email;
+  if (!u && nv.chucVu !== 'Quản lý cơ sở') {
+    moHop({
+      tieuDe: 'Chỉ quản lý cơ sở có tài khoản vận hành',
+      noiDung: '<p class="chu-mo">Hãy đổi chức vụ thành “Quản lý cơ sở” trước khi cấp tài khoản quản lý.</p>',
+      chanTrang: '<button class="nut nut--ngoc" data-dong>Đóng</button>'
+    });
+    return;
+  }
 
   const lamMoi = function () {
     if (xong) xong();
@@ -261,7 +276,9 @@ function moTaiKhoanNhanVien(nv, xong) {
         '<p>Trạng thái: ' + nhanTaiKhoan(u) + '</p></div>' +
         (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Nhân viên đã tự đổi mật khẩu') + '</p></div>' : '') +
       '</div>' +
-      '<p class="ghi-chu-nho">Mật khẩu tạm chỉ hiển thị một lần và bắt buộc đổi ở lần đăng nhập đầu tiên.</p>',
+      '<p class="ghi-chu-nho">' + (DL.cheDoSupabase
+        ? 'Tài khoản Supabase được kích hoạt qua liên kết gửi tới email.'
+        : 'Mật khẩu tạm chỉ hiển thị một lần và bắt buộc đổi ở lần đăng nhập đầu tiên.') + '</p>',
     chanTrang:
       (u
         ? '<button class="nut nut--ngoc" data-dong>Đóng</button>' +
@@ -272,22 +289,39 @@ function moTaiKhoanNhanVien(nv, xong) {
   });
 
   if (!u) {
-    document.getElementById('nvCap').onclick = function () {
-      const kq = DL.capTaiKhoan({
-        hoTen: nv.hoTen, email: nv.email, sdt: nv.sdt,
-        hoSoId: nv.id, loaiHoSo: 'nhanvien', vaiTro: 'quanly'
-      });
-      if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
-      hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, nv.hoTen, lamMoi);
+    document.getElementById('nvCap').onclick = async function () {
+      try {
+        const kq = await DL.capTaiKhoan({
+          hoTen: nv.hoTen, email: nv.email, sdt: nv.sdt,
+          hoSoId: nv.id, loaiHoSo: 'nhanvien', vaiTro: 'quanly'
+        });
+        if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
+        if (kq.invited) {
+          thongBao('Đã gửi email mời đăng nhập tới ' + nv.email + '.');
+          if (xong) xong();
+          return;
+        }
+        hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, nv.hoTen, lamMoi);
+      } catch (loi) {
+        console.error('Cấp tài khoản quản lý thất bại:', loi);
+        thongBao('Không thể gửi lời mời Supabase. Vui lòng thử lại.', 'loi');
+      }
     };
     return;
   }
 
   document.getElementById('nvDatLai').onclick = async function () {
-    const dongY = await hoi('Đặt lại mật khẩu?', 'Mật khẩu cũ sẽ bị thay bằng mật khẩu tạm mới.', 'Đặt lại');
+    const dongY = await hoi('Đặt lại mật khẩu?', DL.cheDoSupabase
+      ? 'Một liên kết đặt mật khẩu mới sẽ được gửi tới email của nhân viên.'
+      : 'Mật khẩu cũ sẽ bị thay bằng mật khẩu tạm mới.', 'Đặt lại');
     if (!dongY) return;
-    const mk = DL.datLaiMatKhau(u.id);
-    hienMatKhauTam(u.tenDangNhap, mk, nv.hoTen, lamMoi);
+    try {
+      await DL.datLaiMatKhau(u.id);
+      thongBao('Đã gửi email đặt lại mật khẩu tới ' + u.tenDangNhap + '.');
+    } catch (loi) {
+      console.error('Gửi email đặt lại mật khẩu thất bại:', loi);
+      thongBao('Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.', 'loi');
+    }
   };
 
   document.getElementById('nvKhoa').onclick = async function () {
@@ -307,11 +341,143 @@ function moTaiKhoanNhanVien(nv, xong) {
 async function xoaNhanVien(id, xong) {
   const nv = DL.tim('nhanvien', id);
   if (!nv) return;
+  if (DL.lay('coso').some(function (c) { return c.quanLyId === id; })) {
+    await hoi('Không thể xóa nhân viên', 'Hãy phân công lại cơ sở trước khi xóa quản lý này.', 'Đã hiểu');
+    return;
+  }
   if (!(await hoi('Xóa nhân viên?', 'Hồ sơ của <b>' + thoat(nv.hoTen) + '</b> và tài khoản đăng nhập (nếu có) sẽ bị xóa.', 'Xóa nhân viên'))) return;
   const u = taiKhoanCuaNhanVien(nv);
   if (u) DL.xoa('nguoidung', u.id);
   DL.xoa('nhanvien', id);
   thongBao('Đã xóa nhân viên.');
+  if (xong) xong();
+}
+
+/* ============================================================
+   CƠ SỞ
+   ============================================================ */
+
+function manCoSo() {
+  const khu = document.getElementById('noidung');
+  khu.innerHTML =
+    '<div class="man">' +
+      dauMan('Cơ sở', 'Chia phòng trọ theo cơ sở; mỗi cơ sở có một quản lý phụ trách.',
+        '<button class="nut nut--chinh" id="themCoSo">Thêm cơ sở</button>') +
+      '<div id="khuCoSo"></div>' +
+    '</div>';
+  veCoSo();
+  document.getElementById('themCoSo').onclick = function () {
+    moFormCoSo(null, veCoSo);
+  };
+}
+
+function veCoSo() {
+  const khu = document.getElementById('khuCoSo');
+  if (!khu) return;
+  const coSo = DL.lay('coso');
+  const dong = coSo.map(function (c) {
+    const quanLy = c.quanLyId ? DL.tim('nhanvien', c.quanLyId) : null;
+    const taiKhoan = quanLy ? taiKhoanCuaNhanVien(quanLy) : null;
+    const soPhong = DL.lay('phong').filter(function (p) { return p.coSoId === c.id; }).length;
+    return [
+      '<strong>' + thoat(c.ma) + '</strong>',
+      '<div>' + thoat(c.ten) + '</div><div class="phu">' + thoat(c.diaChi || 'Chưa cập nhật địa chỉ') + '</div>',
+      soPhong + ' phòng',
+      quanLy
+        ? '<div>' + thoat(quanLy.hoTen) + '</div><div class="phu">' + thoat(taiKhoan ? taiKhoan.tenDangNhap : 'Chưa cấp tài khoản') + '</div>'
+        : '<span class="phu">Chưa phân công</span>',
+      '<div class="nhom-nut">' +
+        '<button class="nut nut--ngoc nut--nho" data-sua-coso="' + c.id + '">Sửa</button>' +
+        '<button class="nut nut--xoa" data-xoa-coso="' + c.id + '">Xóa</button>' +
+      '</div>'
+    ];
+  });
+  khu.innerHTML =
+    luoiThongKe([
+      { nhan: 'Tổng cơ sở', so: coSo.length },
+      { nhan: 'Đã phân công quản lý', so: coSo.filter(function (c) { return !!c.quanLyId; }).length, lop: 'thong-ke__so--la' },
+      { nhan: 'Chưa phân công', so: coSo.filter(function (c) { return !c.quanLyId; }).length, lop: 'thong-ke__so--do' }
+    ]) +
+    bangHtml(['Mã', 'Cơ sở', 'Quy mô', 'Quản lý', ''], dong, 5);
+
+  khu.onclick = function (e) {
+    const sua = e.target.closest('[data-sua-coso]');
+    const xoa = e.target.closest('[data-xoa-coso]');
+    if (sua) moFormCoSo(DL.tim('coso', sua.dataset.suaCoso), veCoSo);
+    if (xoa) xoaCoSo(xoa.dataset.xoaCoso, veCoSo);
+  };
+}
+
+function moFormCoSo(c, xong) {
+  const laSua = !!c;
+  const quanLyOptions = DL.lay('nhanvien').filter(function (nv) {
+    const taiKhoan = taiKhoanCuaNhanVien(nv);
+    if (nv.chucVu !== 'Quản lý cơ sở' || !taiKhoan || taiKhoan.vaiTro !== 'quanly') return false;
+    return !DL.lay('coso').some(function (coSo) {
+      return coSo.quanLyId === nv.id && (!laSua || coSo.id !== c.id);
+    });
+  });
+  const luaChonQuanLy =
+    '<option value="">— Chưa phân công —</option>' +
+    quanLyOptions.map(function (nv) {
+      return '<option value="' + thoat(nv.id) + '"' +
+        (laSua && c.quanLyId === nv.id ? ' selected' : '') + '>' +
+        thoat(nv.hoTen) + ' · ' + thoat(nv.email) + '</option>';
+    }).join('');
+
+  moHop({
+    tieuDe: laSua ? 'Sửa cơ sở' : 'Thêm cơ sở',
+    moTa: 'Mỗi cơ sở phải có một quản lý; một quản lý chỉ phụ trách một cơ sở.',
+    noiDung:
+      '<form class="bieu-mau" id="formCoSo">' +
+        '<div class="luoi-nhap">' +
+          '<div class="nhom"><label for="csTen">Tên cơ sở *</label><input id="csTen" class="o-nhap" value="' + thoat(laSua ? c.ten : '') + '" placeholder="VD: Cơ sở Nguyễn Trãi"></div>' +
+          '<div class="nhom"><label for="csDiaChi">Địa chỉ</label><input id="csDiaChi" class="o-nhap" value="' + thoat(laSua ? c.diaChi : '') + '"></div>' +
+          '<div class="nhom rong"><label for="csQuanLy">Quản lý phụ trách *</label><select id="csQuanLy" class="o-chon">' + luaChonQuanLy + '</select>' +
+            '<p class="ghi-chu-nho">Chỉ nhân viên đã có tài khoản quản lý mới được chọn. Một quản lý chỉ phụ trách một cơ sở.</p></div>' +
+        '</div>' +
+      '</form>',
+    chanTrang:
+      '<button class="nut nut--ngoc" data-dong>Hủy</button>' +
+      '<button class="nut nut--chinh" id="luuCoSo">' + (laSua ? 'Lưu thay đổi' : 'Thêm cơ sở') + '</button>'
+  });
+
+  document.getElementById('luuCoSo').onclick = function () {
+    const ten = giaTri('csTen');
+    const quanLyId = giaTri('csQuanLy') || null;
+    if (!ten || !quanLyId) { thongBao('Vui lòng nhập tên cơ sở và chọn quản lý phụ trách.', 'loi'); return; }
+    if (quanLyId && DL.lay('coso').some(function (x) {
+      return x.quanLyId === quanLyId && (!laSua || x.id !== c.id);
+    })) {
+      thongBao('Quản lý này đã được phân công cho một cơ sở khác.', 'loi');
+      return;
+    }
+
+    const du = { ten: ten, diaChi: giaTri('csDiaChi'), quanLyId: quanLyId };
+    if (laSua) {
+      DL.sua('coso', c.id, du);
+    } else {
+      du.ma = 'CS-' + String(DL.lay('coso').length + 1).padStart(3, '0');
+      DL.them('coso', du);
+    }
+    dongHop();
+    thongBao(laSua ? 'Đã cập nhật cơ sở.' : 'Đã thêm cơ sở.');
+    if (xong) xong();
+  };
+}
+
+async function xoaCoSo(id, xong) {
+  const c = DL.tim('coso', id);
+  if (!c) return;
+  if (DL.lay('phong').some(function (p) { return p.coSoId === id; })) {
+    await hoi('Không thể xóa cơ sở', 'Hãy chuyển các phòng sang cơ sở khác trước khi xóa.', 'Đã hiểu');
+    return;
+  }
+  const moTa = 'Cơ sở <b>' + thoat(c.ten) + '</b> sẽ bị xóa.' +
+    (c.quanLyId ? ' Quản lý của cơ sở này sẽ không thể đăng nhập cho tới khi được phân công lại.' : '');
+  if (!(await hoi('Xóa cơ sở?', moTa, 'Xóa cơ sở'))) return;
+  DL.xoa('coso', id);
+  thongBao('Đã xóa cơ sở.');
   if (xong) xong();
 }
 
@@ -647,30 +813,37 @@ function moFormChiPhi(c, xong) {
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
-  const nd = khoiTaoKhung({ vaiTro: 'admin', menu: MENU_ADMIN, tenVaiTro: 'Chủ trọ' });
-  if (!nd) return;
+  DL.sanSang.then(function () {
+    const nd = khoiTaoKhung({ vaiTro: 'admin', menu: MENU_ADMIN, tenVaiTro: 'Chủ trọ' });
+    if (!nd) return;
 
-  window.cacManHinh = {
-    tongquan: manTongQuan,
-    phong: function () { manPhong(QUYEN_ADMIN); },
-    khach: function () { manKhach(QUYEN_ADMIN); },
-    hopdong: function () { manHopDong(QUYEN_ADMIN); },
-    suco: function () { manSuCo(QUYEN_ADMIN); },
-    hoadon: function () { manHoaDon(QUYEN_ADMIN); },
-    congno: manCongNo,
-    baocao: manBaoCao,
-    chiphi: manChiPhi,
-    dichvu: manDichVu,
-    nhansu: manNhanVien,
-    thongbao: function () { manThongBao(QUYEN_ADMIN); },
-    taikhoan: function () { manTaiKhoan(QUYEN_ADMIN); }
-  };
+    window.cacManHinh = {
+      tongquan: manTongQuan,
+      phong: function () { manPhong(QUYEN_ADMIN); },
+      khach: function () { manKhach(QUYEN_ADMIN); },
+      hopdong: function () { manHopDong(QUYEN_ADMIN); },
+      suco: function () { manSuCo(QUYEN_ADMIN); },
+      hoadon: function () { manHoaDon(QUYEN_ADMIN); },
+      congno: manCongNo,
+      baocao: manBaoCao,
+      chiphi: manChiPhi,
+      dichvu: manDichVu,
+      coso: manCoSo,
+      nhansu: manNhanVien,
+      thongbao: function () { manThongBao(QUYEN_ADMIN); },
+      taikhoan: function () { manTaiKhoan(QUYEN_ADMIN); }
+    };
 
-  window.addEventListener('hashchange', function () {
-    const ten = location.hash.slice(1);
-    if (window.cacManHinh[ten]) chuyenManHinh(ten);
+    window.addEventListener('hashchange', function () {
+      const ten = location.hash.slice(1);
+      if (window.cacManHinh[ten]) chuyenManHinh(ten);
+    });
+
+    const dau = (location.hash || '#tongquan').slice(1);
+    chuyenManHinh(window.cacManHinh[dau] ? dau : 'tongquan');
+  }).catch(function (loi) {
+    console.error('Khởi tạo dashboard Supabase thất bại:', loi);
+    const khu = document.getElementById('noidung');
+    if (khu) khu.innerHTML = '<div class="man"><p class="loi">Không thể tải dữ liệu từ Supabase. Tải lại trang để thử lại.</p></div>';
   });
-
-  const dau = (location.hash || '#tongquan').slice(1);
-  chuyenManHinh(window.cacManHinh[dau] ? dau : 'tongquan');
 });

@@ -568,8 +568,10 @@ function manKhachCaNhan() {
   document.getElementById('khachDangXuat').onclick = function () {
     hoi('Đăng xuất?', 'Bạn sẽ quay về trang giới thiệu.', 'Đăng xuất').then(function (dongY) {
       if (!dongY) return;
-      DL.dangXuat();
-      location.href = '../index.html';
+      DL.dangXuat().then(function () { location.href = '../index.html'; }).catch(function (loi) {
+        console.error('Đăng xuất thất bại:', loi);
+        thongBao('Không thể đăng xuất khỏi Supabase. Vui lòng thử lại.', 'loi');
+      });
     });
   };
 
@@ -581,9 +583,13 @@ function manKhachCaNhan() {
     loi.hidden = true;
     if (moi.length < 8) return baoLoi('Mật khẩu mới phải có ít nhất 8 ký tự.');
     if (moi !== lai) return baoLoi('Hai lần nhập mật khẩu không khớp.');
-    DL.doiMatKhau(nd.id, moi);
-    thongBao('Đã đổi mật khẩu thành công.');
-    document.getElementById('formDoiMkKhach').reset();
+    DL.doiMatKhau(nd.id, moi).then(function () {
+      thongBao('Đã đổi mật khẩu thành công.');
+      document.getElementById('formDoiMkKhach').reset();
+    }).catch(function (loi) {
+      console.error('Đổi mật khẩu thất bại:', loi);
+      baoLoi('Không thể đổi mật khẩu. Vui lòng thử lại.');
+    });
   };
 }
 
@@ -592,31 +598,32 @@ function manKhachCaNhan() {
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
-  const nd = khoiTaoKhung({ vaiTro: 'khachthue', menu: MENU_KHACH, tenVaiTro: 'Khách thuê' });
-  if (!nd) return;
+  DL.sanSang.then(function () {
+    const nd = khoiTaoKhung({ vaiTro: 'khachthue', menu: MENU_KHACH, tenVaiTro: 'Khách thuê' });
+    if (!nd) return;
 
-  window.cacManHinh = {
-    tongquan: manKhachTongQuan,
-    hoadon: manKhachHoaDon,
-    hopdong: manKhachHopDong,
-    chiso: manKhachChiSo,
-    thongbao: manKhachThongBao,
-    suco: manKhachSuCo,
-    thanhvien: manKhachThanhVien,
-    canhan: manKhachCaNhan
-  };
+    window.cacManHinh = {
+      tongquan: manKhachTongQuan,
+      hoadon: manKhachHoaDon,
+      hopdong: manKhachHopDong,
+      chiso: manKhachChiSo,
+      thongbao: manKhachThongBao,
+      suco: manKhachSuCo,
+      thanhvien: manKhachThanhVien,
+      canhan: manKhachCaNhan
+    };
 
-  window.addEventListener('hashchange', function () {
-    const ten = location.hash.slice(1);
-    if (window.cacManHinh[ten]) chuyenManHinh(ten);
-  });
+    window.addEventListener('hashchange', function () {
+      const ten = location.hash.slice(1);
+      if (window.cacManHinh[ten]) chuyenManHinh(ten);
+    });
 
   /* Mở hóa đơn từ link được gửi */
   const thamSo = new URLSearchParams(location.search);
   const idHoaDon = thamSo.get('hoadon');
   const k = layKhachHienTai();
 
-  if (idHoaDon) {
+    if (idHoaDon) {
     const hd = DL.tim('hoadon', idHoaDon);
     if (!k) {
       manChan('Cần đăng nhập', 'Vui lòng đăng nhập bằng tài khoản khách thuê để mở hóa đơn.');
@@ -631,9 +638,14 @@ document.addEventListener('DOMContentLoaded', function () {
     chuyenManHinh('hoadon');
     moHoaDonKhach(hd, k);
     history.replaceState(null, '', 'khachthue.html#hoadon');
-    return;
-  }
+      return;
+    }
 
-  const dau = (location.hash || '#tongquan').slice(1);
-  chuyenManHinh(window.cacManHinh[dau] ? dau : 'tongquan');
+    const dau = (location.hash || '#tongquan').slice(1);
+    chuyenManHinh(window.cacManHinh[dau] ? dau : 'tongquan');
+  }).catch(function (loi) {
+    console.error('Khởi tạo dashboard Supabase thất bại:', loi);
+    const khu = document.getElementById('noidung');
+    if (khu) khu.innerHTML = '<div class="man"><p class="loi">Không thể tải dữ liệu từ Supabase. Tải lại trang để thử lại.</p></div>';
+  });
 });

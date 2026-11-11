@@ -525,26 +525,32 @@ async function thuDuHoaDon(hd) {
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
-  const nd = khoiTaoKhung({ vaiTro: 'quanly', menu: MENU_QUANLY, tenVaiTro: 'Quản lý' });
-  if (!nd) return;
+  DL.sanSang.then(function () {
+    const nd = khoiTaoKhung({ vaiTro: 'quanly', menu: MENU_QUANLY, tenVaiTro: 'Quản lý' });
+    if (!nd) return;
 
-  window.cacManHinh = {
-    phong: function () { manPhong(QUYEN_QUANLY); },
-    khach: function () { manKhach(QUYEN_QUANLY); },
-    hopdong: function () { manHopDong(QUYEN_QUANLY); },
-    suco: function () { manSuCo(QUYEN_QUANLY); },
-    chiso: manChiSo,
-    taohoadon: manTaoHoaDon,
-    guilink: manGuiLink,
-    thanhtoan: manThanhToan,
-    taikhoan: function () { manTaiKhoan(QUYEN_QUANLY); }
-  };
+    window.cacManHinh = {
+      phong: function () { manPhong(QUYEN_QUANLY); },
+      khach: function () { manKhach(QUYEN_QUANLY); },
+      hopdong: function () { manHopDong(QUYEN_QUANLY); },
+      suco: function () { manSuCo(QUYEN_QUANLY); },
+      chiso: manChiSo,
+      taohoadon: manTaoHoaDon,
+      guilink: manGuiLink,
+      thanhtoan: manThanhToan,
+      taikhoan: function () { manTaiKhoan(QUYEN_QUANLY); }
+    };
 
-  window.addEventListener('hashchange', function () {
-    const ten = location.hash.slice(1);
-    if (window.cacManHinh[ten]) chuyenManHinh(ten);
+    window.addEventListener('hashchange', function () {
+      const ten = location.hash.slice(1);
+      if (window.cacManHinh[ten]) chuyenManHinh(ten);
+    });
+
+    const dau = (location.hash || '#phong').slice(1);
+    chuyenManHinh(window.cacManHinh[dau] ? dau : 'phong');
+  }).catch(function (loi) {
+    console.error('Khởi tạo dashboard Supabase thất bại:', loi);
+    const khu = document.getElementById('noidung');
+    if (khu) khu.innerHTML = '<div class="man"><p class="loi">Không thể tải dữ liệu từ Supabase. Tải lại trang để thử lại.</p></div>';
   });
-
-  const dau = (location.hash || '#phong').slice(1);
-  chuyenManHinh(window.cacManHinh[dau] ? dau : 'phong');
 });

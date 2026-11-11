@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Đặt mật khẩu mới cho tài khoản L.Maria.">
+  <title>Đặt lại mật khẩu · L.Maria</title>
+  <link rel="stylesheet" href="../css/chung.css">
+  <link rel="stylesheet" href="../css/dangnhap.css">
+</head>
+
+<body class="trang-dang-nhap">
+  <header class="thanh-dang-nhap">
+    <div class="thanh-dang-nhap__noi">
+      <a class="thuong-hieu" href="../index.html">L.Maria<span>·</span></a>
+      <a class="lien-ket-ve" href="dangnhap.html">← Đăng nhập</a>
+    </div>
+  </header>
+  <main class="dang-nhap">
+    <section class="dang-nhap__phai" style="grid-column: 1 / -1; min-height: calc(100vh - 44px);">
+      <div class="hop-dang-nhap">
+        <p class="hop-dang-nhap__thuong-hieu">L.Maria<span>·</span></p>
+        <p class="nhan-quan-trong">Bảo mật tài khoản</p>
+        <h2>Đặt mật khẩu mới</h2>
+        <p class="hop-dang-nhap__mo-ta">Liên kết chỉ dùng một lần và sẽ hết hạn theo cấu hình của Supabase.</p>
+        <form id="formDatLaiMatKhau" class="bieu-mau" hidden>
+          <div class="nhom">
+            <label for="matKhauMoi">Mật khẩu mới</label>
+            <input id="matKhauMoi" class="o-nhap" type="password" autocomplete="new-password">
+          </div>
+          <div class="nhom">
+            <label for="xacNhanMatKhau">Nhập lại mật khẩu mới</label>
+            <input id="xacNhanMatKhau" class="o-nhap" type="password" autocomplete="new-password">
+          </div>
+          <p class="loi" id="loiDatLaiMatKhau" role="alert" hidden></p>
+          <button class="nut nut--chinh nut--toan" id="nutCapNhatMatKhau" type="submit">Cập nhật mật khẩu</button>
+        </form>
+        <p class="loi" id="thongBaoDatLai" role="alert" hidden></p>
+      </div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/dulieu.js"></script>
+  <script src="../js/datlaimatkhau.js"></script>
+</body>
+
+</html>
