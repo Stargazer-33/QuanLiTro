@@ -75,7 +75,8 @@ thay nội dung trong `<main id="noidung">`.
 - **Quản lý:** phòng, khách thuê, hợp đồng, ghi chỉ số điện nước, tạo hóa đơn, gửi link hóa đơn,
   Kanban thanh toán, xử lý sự cố, tài khoản cá nhân; chỉ xem và vận hành cơ sở được chủ trọ phân công.
 - **Khách thuê:** tổng quan, hóa đơn và thông tin chuyển khoản, hợp đồng và in hợp đồng,
-  chỉ số điện nước, thông báo, gửi sự cố, thành viên ở cùng, thông tin cá nhân, đổi mật khẩu.
+  tìm/lọc hóa đơn, chỉ số điện nước, thông báo, gửi và theo dõi chi tiết sự cố,
+  thành viên ở cùng, cập nhật thông tin liên hệ, đổi mật khẩu.
 
 Chủ trọ có thể quản lý nhiều cơ sở; mỗi cơ sở được gán tối đa một quản lý và một quản lý chỉ phụ trách
 một cơ sở. Khi tạo phòng hoặc hồ sơ khách thuê, chọn cơ sở tương ứng. Các ràng buộc nghiệp vụ được
@@ -104,9 +105,13 @@ chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo prof
 
 ### Cấu hình frontend và mời người dùng
 
-1. `js/supabase-config.js` chứa Project URL và publishable key công khai. Với project khác, thay
-   hai giá trị bằng **Project URL** và **anon/public/publishable key** trong Supabase.
-   Không bao giờ đưa `service_role` hoặc secret key vào file frontend.
+1. Với Netlify, thêm biến môi trường `SUPABASE_URL` và
+   `SUPABASE_PUBLISHABLE_KEY` trong **Site configuration → Environment variables**.
+   `netlify.toml` sẽ tạo `js/supabase-config.js` khi build; không cần ghi key vào Git.
+   Có thể dùng `SUPABASE_ANON_KEY` thay cho `SUPABASE_PUBLISHABLE_KEY` nếu project dùng anon key cũ.
+   Publishable/anon key là khóa công khai và sẽ được trình duyệt tải xuống; biến môi trường build
+   không biến nó thành bí mật. Không bao giờ đưa `service_role` hoặc secret key vào frontend.
+   Bảo vệ dữ liệu bằng RLS và policy trong Supabase.
 2. Dùng static server (không mở trang bằng `file://`). Trong Supabase, mở **Authentication →
    URL Configuration** và thêm địa chỉ trang đăng nhập cùng trang đặt lại mật khẩu vào
    **Redirect URLs**, ví dụ `http://localhost:8000/html/dangnhap.html` và

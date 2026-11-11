@@ -175,20 +175,6 @@ function manKhachHoaDon() {
   const ds = hoaDonCuaKhach(k).sort(function (a, b) { return a.ky < b.ky ? 1 : -1; });
   const tongNo = ds.reduce(function (t, h) { return t + DL.conNo(h); }, 0);
 
-  const dong = ds.map(function (h) {
-    const tt = DL.trangThaiHoaDon(h);
-    return [
-      '<strong>' + thoat(h.ma) + '</strong>',
-      kyDep(h.ky),
-      '<span class="so">' + tien(h.tong) + '</span>',
-      '<span class="so">' + tien(tt.daThu) + '</span>',
-      '<span class="so">' + tien(tt.con) + '</span>',
-      ngay(h.han),
-      nhanHoaDon(h),
-      '<button class="nut nut--ngoc nut--nho" data-xem="' + h.id + '">Chi tiết</button>'
-    ];
-  });
-
   const khu = document.getElementById('noidung');
   khu.innerHTML =
     '<div class="man">' +
@@ -198,9 +184,53 @@ function manKhachHoaDon() {
         { nhan: 'Tổng còn nợ', so: tien(tongNo), lop: tongNo > 0 ? 'thong-ke__so--do' : 'thong-ke__so--la' }
       ]) +
       (ds.length
-        ? bangHtml(['Mã', 'Kỳ', 'Tổng', 'Đã trả', 'Còn lại', 'Hạn', 'Trạng thái', ''], dong)
+        ? '<div class="toolbar"><div class="toolbar__trai">' +
+            oTim('timHoaDonKhach', 'Tìm mã hóa đơn hoặc kỳ…') +
+            '<select id="locHoaDonKhach" class="o-loc" aria-label="Lọc trạng thái hóa đơn">' +
+              '<option value="tatca">Mọi trạng thái</option>' +
+              '<option value="qua-han">Quá hạn</option>' +
+              '<option value="moi">Chưa thanh toán</option>' +
+              '<option value="mot-phan">Thanh toán một phần</option>' +
+              '<option value="xong">Đã thanh toán</option>' +
+            '</select>' +
+          '</div><span class="dem" id="demHoaDonKhach"></span></div>' +
+          '<div id="danhSachHoaDonKhach"></div>'
         : trangTrong('Chưa có hóa đơn', 'Hóa đơn sẽ xuất hiện sau khi chủ trọ lập cho phòng của bạn.')) +
     '</div>';
+
+  function veDanhSachHoaDon() {
+    const tim = giaTri('timHoaDonKhach').toLowerCase();
+    const loc = giaTri('locHoaDonKhach');
+    const ketQua = ds.filter(function (h) {
+      const tt = DL.trangThaiHoaDon(h);
+      const khopTrangThai = loc === 'tatca' || tt.loai === loc;
+      const khopTim = !tim || [h.ma, h.ky, kyDep(h.ky)].join(' ').toLowerCase().indexOf(tim) >= 0;
+      return khopTrangThai && khopTim;
+    });
+    document.getElementById('danhSachHoaDonKhach').innerHTML = bangHtml(
+      ['Mã', 'Kỳ', 'Tổng', 'Đã trả', 'Còn lại', 'Hạn', 'Trạng thái', ''],
+      ketQua.map(function (h) {
+        const tt = DL.trangThaiHoaDon(h);
+        return [
+          '<strong>' + thoat(h.ma) + '</strong>',
+          kyDep(h.ky),
+          '<span class="so">' + tien(h.tong) + '</span>',
+          '<span class="so">' + tien(tt.daThu) + '</span>',
+          '<span class="so">' + tien(tt.con) + '</span>',
+          ngay(h.han),
+          nhanHoaDon(h),
+          '<button class="nut nut--ngoc nut--nho" data-xem="' + thoat(h.id) + '">Chi tiết</button>'
+        ];
+      })
+    );
+    document.getElementById('demHoaDonKhach').textContent = ketQua.length + ' / ' + ds.length + ' hóa đơn';
+  }
+
+  if (ds.length) {
+    veDanhSachHoaDon();
+    ganTim('timHoaDonKhach', veDanhSachHoaDon);
+    document.getElementById('locHoaDonKhach').onchange = veDanhSachHoaDon;
+  }
 
   khu.onclick = function (e) {
     const b = e.target.closest('[data-xem]');
@@ -422,7 +452,8 @@ function manKhachSuCo() {
       '<div>' + thoat(sc.tieuDe) + '</div><div class="phu">' + thoat(sc.phanLoai) + '</div>',
       nhanMucDo(sc.mucDo),
       ngayGio(sc.ngayGui),
-      nhanSuco(sc)
+      nhanSuco(sc),
+      '<button class="nut nut--ngoc nut--nho" data-xem-su-co="' + thoat(sc.id) + '">Chi tiết</button>'
     ];
   });
 
@@ -430,12 +461,12 @@ function manKhachSuCo() {
   khu.innerHTML =
     '<div class="man">' +
       dauMan('Báo sự cố', 'Gửi sự cố cho phòng của bạn và theo dõi tiến độ xử lý.') +
-      (p
-        ? '<div class="luoi luoi--1-2" style="margin-top:24px">' +
-            '<div class="the">' +
+      '<div class="' + (p ? 'luoi luoi--1-2' : '') + '" style="margin-top:24px">' +
+        (p
+          ? '<div class="the">' +
               '<div class="the__dau"><div><h3>Gửi sự cố mới</h3><p>Phòng ' + thoat(p.ma) + ' · ' + thoat(k.hoTen) + '</p></div></div>' +
               '<form class="bieu-mau" id="formBaoSuCo">' +
-                '<div class="nhom"><label for="ksTieuDe">Tiêu đề *</label><input id="ksTieuDe" class="o-nhap" maxlength="120" placeholder="Tối đa 120 ký tự"></div>' +
+                '<div class="nhom"><label for="ksTieuDe">Tiêu đề *</label><input id="ksTieuDe" class="o-nhap" maxlength="120" required placeholder="Tối đa 120 ký tự"></div>' +
                 '<div class="luoi-nhap">' +
                   '<div class="nhom"><label for="ksPhanLoai">Phân loại</label><select id="ksPhanLoai" class="o-chon">' +
                     '<option>Điện</option><option>Nước</option><option>Cơ sở vật chất</option><option>Vệ sinh</option><option>An ninh</option><option>Khác</option>' +
@@ -444,23 +475,25 @@ function manKhachSuCo() {
                     '<option>Thấp</option><option selected>Trung bình</option><option>Cao</option></select></div>' +
                 '</div>' +
                 '<div class="nhom"><label for="ksMoTa">Mô tả</label><textarea id="ksMoTa" class="o-vung" maxlength="1000" placeholder="Tối đa 1.000 ký tự"></textarea></div>' +
-                '<div><button type="button" class="nut nut--chinh" id="guiSuCo">Gửi sự cố</button></div>' +
+                '<div><button type="submit" class="nut nut--chinh" id="guiSuCo">Gửi sự cố</button></div>' +
               '</form>' +
-            '</div>' +
-            '<div class="the">' +
-              '<div class="the__dau"><div><h3>Lịch sử sự cố</h3><p>' + ds.length + ' phiếu đã gửi</p></div></div>' +
-              (ds.length
-                ? bangHtml(['Mã', 'Sự cố', 'Mức độ', 'Ngày gửi', 'Trạng thái'], dong, 5)
-                : trangTrong('Chưa có sự cố', 'Khi cần hỗ trợ, hãy gửi phiếu đầu tiên cho chủ trọ.')) +
-            '</div>' +
-          '</div>'
-        : '<div style="margin-top:24px">' + trangTrong('Chưa thể báo sự cố', 'Bạn cần được xếp phòng và có hợp đồng hiệu lực trước khi gửi sự cố.') + '</div>') +
+            '</div>'
+          : '') +
+        '<div class="the">' +
+          '<div class="the__dau"><div><h3>Lịch sử sự cố</h3><p>' + ds.length + ' phiếu đã gửi</p></div></div>' +
+          (ds.length
+            ? bangHtml(['Mã', 'Sự cố', 'Mức độ', 'Ngày gửi', 'Trạng thái', ''], dong, 6)
+            : trangTrong('Chưa có sự cố', 'Khi cần hỗ trợ, hãy gửi phiếu đầu tiên cho chủ trọ.')) +
+        '</div>' +
+      '</div>' +
+      (!p
+        ? '<p class="ghi-chu-nho">Bạn không có hợp đồng đang hiệu lực nên chưa thể gửi sự cố mới. Lịch sử các phiếu đã gửi vẫn được giữ lại.</p>'
+        : '') +
     '</div>';
 
-  const nutGui = document.getElementById('guiSuCo');
-  if (!nutGui) return;
-
-  nutGui.onclick = function () {
+  const form = document.getElementById('formBaoSuCo');
+  if (form) form.onsubmit = function (e) {
+    e.preventDefault();
     const tieuDe = giaTri('ksTieuDe');
     const moTa = giaTri('ksMoTa');
     if (!tieuDe) { thongBao('Vui lòng nhập tiêu đề sự cố.', 'loi'); return; }
@@ -480,6 +513,38 @@ function manKhachSuCo() {
     thongBao('Đã gửi sự cố. Chủ trọ sẽ sớm phản hồi.');
     manKhachSuCo();
   };
+
+  khu.onclick = function (e) {
+    const nutXem = e.target.closest('[data-xem-su-co]');
+    if (nutXem) moChiTietSuCoKhach(DL.tim('suco', nutXem.dataset.xemSuCo), k);
+  };
+}
+
+function moChiTietSuCoKhach(sc, k) {
+  if (!sc || sc.khachId !== k.id) {
+    thongBao('Bạn không có quyền xem sự cố này.', 'loi');
+    return;
+  }
+  const p = DL.tim('phong', sc.phongId);
+  moHop({
+    tieuDe: 'Phiếu sự cố ' + thoat(sc.ma),
+    moTa: ngayGio(sc.ngayGui) + (p ? ' · Phòng ' + thoat(p.ma) : ''),
+    noiDung:
+      '<div class="hang" style="gap:8px;margin-bottom:14px">' +
+        nhanSuco(sc) + nhanMucDo(sc.mucDo) + '<span class="phu">' + thoat(sc.phanLoai || 'Khác') + '</span>' +
+      '</div>' +
+      '<h3 style="font-size:21px;letter-spacing:-0.2px;line-height:1.3">' + thoat(sc.tieuDe) + '</h3>' +
+      '<p class="chu-mo" style="font-size:14px;margin-top:10px;line-height:1.6;white-space:pre-line">' +
+        (sc.moTa ? thoat(sc.moTa) : 'Không có mô tả bổ sung.') +
+      '</p>' +
+      '<div class="vach"></div>' +
+      danhSachMoTa([
+        ['Phòng', p ? thoat(p.ma) + ' — ' + thoat(p.ten) : '—'],
+        ['Người tiếp nhận', thoat(sc.nguoiXuLy) || 'Chưa cập nhật'],
+        ['Chi phí phát sinh', Number(sc.chiPhi) > 0 ? tien(sc.chiPhi) : 'Chưa phát sinh / chưa cập nhật']
+      ]),
+    chanTrang: '<button class="nut nut--chinh" data-dong>Đóng</button>'
+  });
 }
 
 /* ============================================================
@@ -537,7 +602,7 @@ function manKhachCaNhan() {
   const khu = document.getElementById('noidung');
   khu.innerHTML =
     '<div class="man">' +
-      dauMan('Thông tin cá nhân', 'Chỉ xem. Muốn thay đổi thông tin, vui lòng liên hệ chủ trọ.') +
+      dauMan('Thông tin cá nhân', 'Cập nhật số điện thoại và địa chỉ liên hệ. Email, CCCD và thông tin thuê do chủ trọ quản lý.') +
       '<div class="luoi luoi--1-2" style="margin-top:24px">' +
         '<div class="the">' +
           '<div class="the__dau"><h3>Hồ sơ</h3></div>' +
@@ -554,6 +619,16 @@ function manKhachCaNhan() {
           '<button class="nut nut--ngoc" id="khachDangXuat">Đăng xuất</button>' +
         '</div>' +
         '<div class="the">' +
+          '<div class="the__dau"><div><h3>Cập nhật liên hệ</h3><p>Chỉ cập nhật thông tin liên hệ của hồ sơ này.</p></div></div>' +
+          '<form class="bieu-mau" id="formLienHeKhach">' +
+            '<div class="nhom"><label for="klSdt">Số điện thoại</label><input id="klSdt" type="tel" class="o-nhap" inputmode="tel" autocomplete="tel" maxlength="11" value="' + thoat(k.sdt || '') + '" placeholder="Ví dụ: 0901234567"></div>' +
+            '<div class="nhom"><label for="klDiaChi">Địa chỉ liên hệ</label><input id="klDiaChi" class="o-nhap" autocomplete="street-address" maxlength="200" value="' + thoat(k.diaChi || '') + '"></div>' +
+            '<div class="nhom"><label for="klQueQuan">Quê quán</label><input id="klQueQuan" class="o-nhap" maxlength="100" value="' + thoat(k.queQuan || '') + '"></div>' +
+            '<p class="loi" id="loiLienHeKhach" hidden></p>' +
+            '<div><button type="submit" class="nut nut--chinh" id="luuLienHeKhach">Lưu thông tin liên hệ</button></div>' +
+          '</form>' +
+        '</div>' +
+        '<div class="the">' +
           '<div class="the__dau"><div><h3>Đổi mật khẩu</h3><p>Mật khẩu mới tối thiểu 8 ký tự.</p></div></div>' +
           '<form class="bieu-mau" id="formDoiMkKhach">' +
             '<div class="nhom"><label for="kmMoi">Mật khẩu mới</label><input id="kmMoi" type="password" class="o-nhap" autocomplete="new-password"></div>' +
@@ -564,6 +639,34 @@ function manKhachCaNhan() {
         '</div>' +
       '</div>' +
     '</div>';
+
+  document.getElementById('formLienHeKhach').onsubmit = function (e) {
+    e.preventDefault();
+    const sdt = giaTri('klSdt');
+    const diaChi = giaTri('klDiaChi');
+    const queQuan = giaTri('klQueQuan');
+    const loi = document.getElementById('loiLienHeKhach');
+    loi.hidden = true;
+    if (sdt && !/^0\d{9,10}$/.test(sdt)) {
+      loi.hidden = false;
+      loi.textContent = 'Số điện thoại cần có 10–11 chữ số và bắt đầu bằng số 0.';
+      document.getElementById('klSdt').focus();
+      return;
+    }
+    if (diaChi.length > 200 || queQuan.length > 100) {
+      loi.hidden = false;
+      loi.textContent = 'Địa chỉ tối đa 200 ký tự, quê quán tối đa 100 ký tự.';
+      return;
+    }
+    const daCapNhat = DL.sua('khach', k.id, { sdt: sdt, diaChi: diaChi, queQuan: queQuan });
+    if (!daCapNhat) {
+      loi.hidden = false;
+      loi.textContent = 'Không thể cập nhật hồ sơ. Vui lòng tải lại trang và thử lại.';
+      return;
+    }
+    thongBao('Đã cập nhật thông tin liên hệ.');
+    manKhachCaNhan();
+  };
 
   document.getElementById('khachDangXuat').onclick = function () {
     hoi('Đăng xuất?', 'Bạn sẽ quay về trang giới thiệu.', 'Đăng xuất').then(function (dongY) {
