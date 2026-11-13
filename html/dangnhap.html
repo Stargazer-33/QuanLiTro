@@ -79,6 +79,44 @@
           </button>
         </div>
 
+        <div id="khoiTaoChuTro" hidden>
+          <p class="hop-dang-nhap__mo-ta">
+            Thiết bị này chưa có tài khoản. Tạo tài khoản chủ trọ để bắt đầu quản lý.
+          </p>
+          <form id="formKhoiTao" class="bieu-mau" novalidate>
+            <div class="nhom">
+              <label for="ktHoTen">Họ tên chủ trọ</label>
+              <input id="ktHoTen" class="o-nhap" type="text" autocomplete="name" placeholder="Ví dụ: Nguyễn Văn Chủ">
+            </div>
+
+            <div class="nhom">
+              <label for="ktTenDangNhap">Tên đăng nhập</label>
+              <input id="ktTenDangNhap" class="o-nhap" type="text" autocomplete="username" autocapitalize="none"
+                spellcheck="false" placeholder="Email hoặc số điện thoại">
+            </div>
+
+            <div class="nhom">
+              <label for="ktMatKhau">Mật khẩu</label>
+              <input id="ktMatKhau" class="o-nhap" type="password" autocomplete="new-password"
+                placeholder="Tối thiểu 8 ký tự">
+            </div>
+
+            <div class="nhom">
+              <label for="ktMatKhauLai">Nhập lại mật khẩu</label>
+              <input id="ktMatKhauLai" class="o-nhap" type="password" autocomplete="new-password"
+                placeholder="Nhập lại mật khẩu">
+            </div>
+
+            <p class="loi" id="loiKhoiTao" role="alert" hidden></p>
+
+            <button class="nut nut--chinh nut--toan" id="nutKhoiTao" type="submit">Tạo tài khoản chủ trọ</button>
+          </form>
+          <p class="ghi-chu-nho" style="margin-top:16px">
+            Hoặc dùng ngay bộ dữ liệu thử có sẵn tài khoản cho cả 3 vai trò.
+          </p>
+          <button class="nut nut--ngoc nut--toan" id="nutThuTuDangNhap" type="button">Nạp bộ dữ liệu thử</button>
+        </div>
+
         <div id="khoiForm">
           <form id="formDangNhap" class="bieu-mau" novalidate>
             <div class="nhom">
@@ -111,11 +149,11 @@
 
           <p class="ghi-chu-nho">
             Chưa có tài khoản? Vui lòng liên hệ chủ trọ hoặc quản lý để được cấp
-            mật khẩu tạm. Bạn sẽ đổi mật khẩu ở lần đăng nhập đầu tiên.
+            tên đăng nhập và mật khẩu.
           </p>
 
-          <details class="tai-khoan-mau">
-            <summary>Tài khoản dùng thử <span>7 tài khoản</span></summary>
+          <details class="tai-khoan-mau" id="taiKhoanThu" hidden>
+            <summary>Tài khoản thử <span>7 tài khoản</span></summary>
             <p class="tai-khoan-mau__goi-y">Bấm vào một tài khoản để điền nhanh vào biểu mẫu.</p>
             <div class="tai-khoan-mau__ds">
               <button type="button" data-ten="admin@ancu.vn" data-mat-khau="12345678">
@@ -141,7 +179,7 @@
               </button>
             </div>
             <p class="tai-khoan-mau__luu-y">
-              Dữ liệu dùng thử được lưu trong trình duyệt. Xóa dữ liệu trang web để khôi phục bộ mẫu ban đầu.
+              Tài khoản thử chỉ có sau khi nạp bộ dữ liệu thử và chỉ lưu trong trình duyệt.
             </p>
           </details>
         </div>

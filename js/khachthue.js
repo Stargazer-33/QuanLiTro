@@ -737,7 +737,9 @@ document.addEventListener('DOMContentLoaded', function () {
       chuyenManHinh('hoadon');
       return;
     }
-    DL.sua('hoadon', hd.id, { luotMo: (Number(hd.luotMo) || 0) + 1 });
+    DL.tangLuotMoHoaDon(hd.id).catch(function (loi) {
+      console.error('Không ghi được lượt mở hóa đơn:', loi);
+    });
     chuyenManHinh('hoadon');
     moHoaDonKhach(hd, k);
     history.replaceState(null, '', 'khachthue.html#hoadon');

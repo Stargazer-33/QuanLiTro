@@ -433,17 +433,17 @@ function hienDoiMatKhauBatBuoc(nd) {
 /* Hiện mật khẩu tạm một lần, kèm nút sao chép. xong: hàm gọi khi đóng */
 function hienMatKhauTam(tenDangNhap, matKhau, hoTen, xong) {
   const lop = moHop({
-    tieuDe: 'Đã cấp mật khẩu tạm',
+    tieuDe: 'Thông tin đăng nhập',
     moTa: 'Mật khẩu chỉ hiển thị một lần. Hãy sao chép và gửi cho ' + thoat(hoTen) + '.',
     noiDung:
       '<div class="khoi-mat-khau">' +
         '<p class="khoi-mat-khau__nhan">Tên đăng nhập</p>' +
         '<div class="khoi-mat-khau__dong"><code>' + thoat(tenDangNhap) + '</code>' +
         '<button type="button" class="nut nut--ngoc nut--nho" data-chep-ten>Sao chép</button></div>' +
-        '<p class="khoi-mat-khau__nhan">Mật khẩu tạm</p>' +
+        '<p class="khoi-mat-khau__nhan">Mật khẩu</p>' +
         '<div class="khoi-mat-khau__dong"><code class="khoi-mat-khau__mk">' + thoat(matKhau) + '</code>' +
         '<button type="button" class="nut nut--ngoc nut--nho" data-chep-mk>Sao chép</button></div>' +
-        '<p class="ghi-chu-nho">Người dùng sẽ được yêu cầu đổi mật khẩu ở lần đăng nhập đầu tiên.</p>' +
+        '<p class="ghi-chu-nho">Người dùng đăng nhập bằng tên đăng nhập và mật khẩu này.</p>' +
       '</div>',
     chanTrang: '<button class="nut nut--chinh" data-dong>Đã hiểu</button>'
   });

@@ -342,7 +342,7 @@ const DL = (function () {
     return hangDoiGhi;
   }
 
-  function ghiBanGhi(bang, obj) {
+  function ghiBanGhi(bang, obj, chiCapNhat) {
     if (!cheDoSupabase || bang === 'nguoidung') return;
     if (!profileHienTai) {
       baoLoiBackend(new Error('Cần đăng nhập trước khi ghi dữ liệu.'));
@@ -350,6 +350,11 @@ const DL = (function () {
     }
     const ownerId = profileHienTai.role === 'owner' ? profileHienTai.id : profileHienTai.owner_id;
     xepGhi(async function () {
+      if (chiCapNhat) {
+        loiSupabase(await supabaseClient.from('app_records').update({ payload: obj })
+          .eq('owner_id', ownerId).eq('table_name', bang).eq('record_id', String(obj.id)));
+        return;
+      }
       loiSupabase(await supabaseClient.from('app_records').upsert({
         owner_id: ownerId,
         table_name: bang,
@@ -426,7 +431,8 @@ const DL = (function () {
     } catch (e) {
       du = null;
     }
-    if (!du || !Array.isArray(du.phong)) du = duLieuMau();
+    if (!du || typeof du !== 'object' || Array.isArray(du)) du = khoDuLieuTrong();
+    if (!Array.isArray(du.phong)) du.phong = [];
     boNho = chuanHoaDuLieu(du);
     luu();
     return boNho;
@@ -534,9 +540,23 @@ const DL = (function () {
     const o = tim(bang, id);
     if (!o) return null;
     Object.assign(o, thayDoi);
-    if (cheDoSupabase) ghiBanGhi(bang, o);
+    if (cheDoSupabase) ghiBanGhi(bang, o, true);
     else luu();
     return o;
+  }
+
+  /* Ghi nhận lượt khách mở hóa đơn (khách thuê không được update trực tiếp) */
+  async function tangLuotMoHoaDon(hoaDonId) {
+    if (cheDoSupabase) {
+      loiSupabase(await supabaseClient.rpc('increment_invoice_view', {
+        p_invoice_id: String(hoaDonId)
+      }));
+      const hd = tim('hoadon', hoaDonId);
+      if (hd) hd.luotMo = (Number(hd.luotMo) || 0) + 1;
+      return;
+    }
+    const hd = tim('hoadon', hoaDonId);
+    if (hd) sua('hoadon', hoaDonId, { luotMo: (Number(hd.luotMo) || 0) + 1 });
   }
 
   /* Xóa bản ghi */
@@ -561,13 +581,16 @@ const DL = (function () {
     return true;
   }
 
-  /* Khôi phục dữ liệu mẫu */
-  function datLai() {
+  /* Nạp bộ dữ liệu thử cho cả 3 vai trò (chỉ chế độ localStorage) */
+  function napBoDuLieuThu() {
     if (cheDoSupabase) {
-      throw new Error('Không thể khôi phục dữ liệu mẫu local khi đang dùng Supabase.');
+      throw new Error('Chỉ nạp được dữ liệu thử khi chạy chế độ localStorage.');
     }
-    boNho = duLieuMau();
+    boNho = chuanHoaDuLieu(duLieuMau());
     luu();
+    return CAC_BANG.reduce(function (tong, bang) {
+      return tong + (boNho[bang] || []).length;
+    }, 0);
   }
 
   /* ===== Nghiệp vụ dùng chung ===== */
@@ -699,28 +722,32 @@ const DL = (function () {
     return 'Tam@' + Math.floor(100000 + Math.random() * 900000);
   }
 
-  /* Cấp tài khoản mới với mật khẩu tạm, trả về mật khẩu để hiển thị một lần */
+  /* Cấp tài khoản mới với mật khẩu tạm, trả về mật khẩu để hiển thị một lần.
+     Chủ trọ tạo thẳng tài khoản + mật khẩu trong Supabase Auth để người dùng
+     đăng nhập ngay, không cần mở email mời. */
   async function capTaiKhoan(o) {
     const ten = tenDangNhapTuHoSo(o);
     if (cheDoSupabase) {
       if (!profileHienTai || profileHienTai.role !== 'owner') {
-        return { ok: false, loi: 'Chỉ chủ trọ mới được mời tài khoản.' };
+        return { ok: false, loi: 'Chỉ chủ trọ mới được cấp tài khoản.' };
       }
       const email = String(o.email || ten).trim().toLowerCase();
       if (!email || email.indexOf('@') < 1) {
-        return { ok: false, loi: 'Supabase Auth cần địa chỉ email hợp lệ để gửi lời mời.' };
+        return { ok: false, loi: 'Supabase Auth cần địa chỉ email hợp lệ để tạo tài khoản.' };
       }
       const loai = o.vaiTro === 'quanly' ? 'manager' : 'tenant';
       const coSo = loai === 'manager'
         ? (boNho.coso || []).find(function (c) { return c.quanLyId === o.hoSoId; })
         : null;
       if (loai === 'manager' && !coSo) {
-        return { ok: false, loi: 'Hãy phân công nhân viên vào một cơ sở trước khi mời quản lý.' };
+        return { ok: false, loi: 'Hãy phân công nhân viên vào một cơ sở trước khi cấp tài khoản quản lý.' };
       }
+      const matKhau = taoMatKhauTam();
       await hangDoiGhi;
       const result = await supabaseClient.functions.invoke('invite-user', {
         body: {
           email: email,
+          password: matKhau,
           full_name: o.hoTen,
           role: loai,
           employee_id: loai === 'manager' ? o.hoSoId : null,
@@ -728,13 +755,26 @@ const DL = (function () {
           facility_id: coSo ? coSo.id : (o.coSoId || null)
         }
       });
-      if (result.error) return { ok: false, loi: result.error.message };
-      const profile = result.data && result.data.profile;
-      if (profile) {
-        const user = hoSoThanhNguoiDung(profile);
-        boNho.nguoidung.push(user);
+      if (result.error) {
+        let loi = result.error.message;
+        try {
+          const body = await result.error.context.json();
+          if (body && body.error) loi = body.error;
+        } catch (e) { /* giữ thông báo mặc định */ }
+        return { ok: false, loi: loi };
       }
-      return { ok: true, invited: true, nguoidung: profile ? hoSoThanhNguoiDung(profile) : null };
+      const profile = result.data && result.data.profile;
+      if (!profile) return { ok: false, loi: 'Máy chủ không trả về hồ sơ tài khoản.' };
+      const matKhauMoi = result.data && result.data.password;
+      if (!matKhauMoi) {
+        return {
+          ok: false,
+          loi: 'Edge Function invite-user chưa được cập nhật. Hãy deploy lại hàm này rồi thử lại.'
+        };
+      }
+      const user = hoSoThanhNguoiDung(profile);
+      boNho.nguoidung.push(user);
+      return { ok: true, nguoidung: user, matKhau: matKhauMoi };
     }
     const daCo = (doc().nguoidung || []).find(function (u) {
       return u.tenDangNhap.toLowerCase() === ten.toLowerCase();
@@ -751,28 +791,35 @@ const DL = (function () {
       hoSoId: o.hoSoId,
       loaiHoSo: o.loaiHoSo,
       trangThai: 'hoatdong',
-      phaiDoiMatKhau: true,
+      phaiDoiMatKhau: false,
       ngayTao: _homNay()
     });
     return { ok: true, nguoidung: u, matKhau: matKhau };
   }
 
-  /* Đặt lại mật khẩu tạm */
+  /* Đặt lại mật khẩu: Supabase đặt trực tiếp, localStorage sinh mật khẩu tạm.
+     Trả về mật khẩu mới để chủ trọ gửi cho người dùng. */
   async function datLaiMatKhau(userId) {
     if (cheDoSupabase) {
       const user = tim('nguoidung', userId);
-      if (!user || !user.tenDangNhap) throw new Error('Không tìm thấy email tài khoản.');
-      loiSupabase(await supabaseClient.auth.resetPasswordForEmail(user.tenDangNhap, {
-        redirectTo: new URL('datlaimatkhau.html', location.href).toString()
-      }));
-      loiSupabase(await supabaseClient.rpc('update_profile_settings', {
-        p_profile_id: userId,
-        p_must_change_password: true
-      }));
-      return null;
+      if (!user) throw new Error('Không tìm thấy tài khoản.');
+      const matKhau = taoMatKhauTam();
+      const result = await supabaseClient.functions.invoke('invite-user', {
+        body: { action: 'reset-password', profile_id: userId, password: matKhau }
+      });
+      if (result.error) {
+        let loi = result.error.message;
+        try {
+          const body = await result.error.context.json();
+          if (body && body.error) loi = body.error;
+        } catch (e) { /* giữ thông báo mặc định */ }
+        throw new Error(loi);
+      }
+      sua('nguoidung', userId, { phaiDoiMatKhau: false, trangThai: 'hoatdong' });
+      return (result.data && result.data.password) || matKhau;
     }
     const matKhau = taoMatKhauTam();
-    sua('nguoidung', userId, { matKhau: matKhau, phaiDoiMatKhau: true, trangThai: 'hoatdong' });
+    sua('nguoidung', userId, { matKhau: matKhau, phaiDoiMatKhau: false, trangThai: 'hoatdong' });
     return matKhau;
   }
 
@@ -954,12 +1001,6 @@ const DL = (function () {
     return soNhap;
   }
 
-  async function napDuLieuMau() {
-    const mau = duLieuMau();
-    delete mau.nguoidung;
-    return ghiBoDuLieuVaoSupabase(mau, 'Không tìm thấy dữ liệu mẫu.');
-  }
-
   async function nhapDuLieuCu() {
     if (!cheDoSupabase || !profileHienTai || profileHienTai.role !== 'owner') {
       throw new Error('Chỉ chủ trọ đang đăng nhập mới có thể nhập dữ liệu local.');
@@ -976,7 +1017,7 @@ const DL = (function () {
   }
 
   return {
-    lay: lay, tim: tim, them: them, sua: sua, xoa: xoa, datLai: datLai,
+    lay: lay, tim: tim, them: them, sua: sua, xoa: xoa,
     giaTriDaTonTai: giaTriDaTonTai, soBanGhiToanBo: soBanGhiToanBo,
     hopDongHieuLuc: hopDongHieuLuc, hopDongCuaKhach: hopDongCuaKhach,
     hoaDonTrongKy: hoaDonTrongKy, daThu: daThu, conNo: conNo,
@@ -990,7 +1031,8 @@ const DL = (function () {
     xacThucMatKhau: xacThucMatKhau,
     capNhatMatKhauTuLienKet: capNhatMatKhauTuLienKet,
     coSoCuaPhien: coSoCuaPhien, khoiTao: khoiTao, choGhiXong: function () { return hangDoiGhi; },
-    nhapDuLieuCu: nhapDuLieuCu, napDuLieuMau: napDuLieuMau, cheDoSupabase: cheDoSupabase
+    tangLuotMoHoaDon: tangLuotMoHoaDon,
+    nhapDuLieuCu: nhapDuLieuCu, napBoDuLieuThu: napBoDuLieuThu, cheDoSupabase: cheDoSupabase
   };
 })();
 

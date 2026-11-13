@@ -5,11 +5,19 @@ const url = (process.env.SUPABASE_URL || '').trim();
 const key = (process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
 
 if (!url || !key) {
-  throw new Error('Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in the Netlify environment.');
+  throw new Error('Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY).');
 }
 
-if (!/^https:\/\//i.test(url)) {
-  throw new Error('SUPABASE_URL must use HTTPS.');
+let parsedUrl;
+try {
+  parsedUrl = new URL(url);
+} catch (error) {
+  throw new Error('SUPABASE_URL must be a valid URL.');
+}
+
+const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(parsedUrl.hostname);
+if (parsedUrl.protocol !== 'https:' && !(parsedUrl.protocol === 'http:' && isLocalhost)) {
+  throw new Error('SUPABASE_URL must use HTTPS, except for a local localhost URL.');
 }
 
 function isPublicKey(value) {

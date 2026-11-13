@@ -274,11 +274,11 @@ function moTaiKhoanNhanVien(nv, xong) {
       '<div class="the-tai-khoan">' +
         '<div><h4>Tên đăng nhập</h4><p class="ma-don">' + thoat(ten) + '</p>' +
         '<p>Trạng thái: ' + nhanTaiKhoan(u) + '</p></div>' +
-        (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Nhân viên đã tự đổi mật khẩu') + '</p></div>' : '') +
+        (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Mật khẩu do chủ trọ cấp') + '</p></div>' : '') +
       '</div>' +
       '<p class="ghi-chu-nho">' + (DL.cheDoSupabase
-        ? 'Tài khoản Supabase được kích hoạt qua liên kết gửi tới email.'
-        : 'Mật khẩu tạm chỉ hiển thị một lần và bắt buộc đổi ở lần đăng nhập đầu tiên.') + '</p>',
+        ? 'Tài khoản được tạo trực tiếp trong Supabase Auth với mật khẩu do chủ trọ cấp.'
+        : 'Nhân viên đăng nhập bằng tên đăng nhập và mật khẩu do chủ trọ cấp.') + '</p>',
     chanTrang:
       (u
         ? '<button class="nut nut--ngoc" data-dong>Đóng</button>' +
@@ -296,31 +296,24 @@ function moTaiKhoanNhanVien(nv, xong) {
           hoSoId: nv.id, loaiHoSo: 'nhanvien', vaiTro: 'quanly'
         });
         if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
-        if (kq.invited) {
-          thongBao('Đã gửi email mời đăng nhập tới ' + nv.email + '.');
-          if (xong) xong();
-          return;
-        }
         hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, nv.hoTen, lamMoi);
       } catch (loi) {
         console.error('Cấp tài khoản quản lý thất bại:', loi);
-        thongBao('Không thể gửi lời mời Supabase. Vui lòng thử lại.', 'loi');
+        thongBao('Không thể tạo tài khoản. Vui lòng thử lại.', 'loi');
       }
     };
     return;
   }
 
   document.getElementById('nvDatLai').onclick = async function () {
-    const dongY = await hoi('Đặt lại mật khẩu?', DL.cheDoSupabase
-      ? 'Một liên kết đặt mật khẩu mới sẽ được gửi tới email của nhân viên.'
-      : 'Mật khẩu cũ sẽ bị thay bằng mật khẩu tạm mới.', 'Đặt lại');
+    const dongY = await hoi('Đặt lại mật khẩu?', 'Mật khẩu cũ sẽ bị thay bằng mật khẩu mới.', 'Đặt lại');
     if (!dongY) return;
     try {
-      await DL.datLaiMatKhau(u.id);
-      thongBao('Đã gửi email đặt lại mật khẩu tới ' + u.tenDangNhap + '.');
+      const matKhau = await DL.datLaiMatKhau(u.id);
+      hienMatKhauTam(u.tenDangNhap, matKhau, nv.hoTen, lamMoi);
     } catch (loi) {
-      console.error('Gửi email đặt lại mật khẩu thất bại:', loi);
-      thongBao('Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.', 'loi');
+      console.error('Đặt lại mật khẩu thất bại:', loi);
+      thongBao(loi.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.', 'loi');
     }
   };
 

@@ -2,7 +2,8 @@
 
 Ứng dụng quản lý nhà trọ thuần **HTML, CSS, JavaScript**. Khi có cấu hình trong
 `js/supabase-config.js`, đăng nhập và dữ liệu nghiệp vụ dùng Supabase Auth/Postgres.
-Không có cấu hình thì ứng dụng chạy bằng dữ liệu mẫu localStorage.
+Không có cấu hình thì ứng dụng chạy bằng localStorage; lần đầu mở trang đăng nhập sẽ
+hiện biểu mẫu tạo tài khoản chủ trọ.
 
 ## Cách chạy
 
@@ -21,10 +22,19 @@ Sau đó mở `http://localhost:8000/`.
 Cũng có thể mở trực tiếp `index.html` bằng trình duyệt. Lưu ý mỗi trình duyệt có thể
 quản lý `localStorage` của trang `file://` theo cách khác nhau; dùng static server sẽ ổn định hơn.
 
-## Tài khoản mẫu local
+## Chế độ localStorage
 
-Các tài khoản bên dưới chỉ dùng khi chạy chế độ localStorage. Chúng không phải người dùng
-Supabase Auth và không hoạt động khi cấu hình Supabase đã bật.
+Khi chưa cấu hình Supabase, dữ liệu được lưu trong trình duyệt. Lần đầu mở
+`html/dangnhap.html`, hệ thống hiện biểu mẫu tạo tài khoản chủ trọ đầu tiên; sau đó chủ trọ
+có thể tạo cơ sở, phòng và cấp tài khoản cho quản lý, khách thuê.
+
+Chế độ này chỉ dùng để chạy thử, không dùng cho dữ liệu thật. Xem mục
+[Đặt lại dữ liệu local](#đặt-lại-dữ-liệu-local) khi cần xoá sạch dữ liệu trong trình duyệt.
+
+Để thử đủ 3 vai trò, đăng nhập bằng tài khoản chủ trọ hiện có rồi vào
+**Tài khoản → Nạp bộ dữ liệu thử**. Nếu chưa có tài khoản nào, trang đăng nhập cũng có nút
+**Nạp bộ dữ liệu thử** để tạo nhanh. Bộ dữ liệu này thay toàn bộ dữ liệu local và tạo sẵn
+các tài khoản sau (trang đăng nhập cũng hiện danh sách để điền nhanh):
 
 | Vai trò | Tên đăng nhập | Mật khẩu | Ghi chú |
 |---|---|---|---|
@@ -35,8 +45,6 @@ Supabase Auth và không hoạt động khi cấu hình Supabase đã bật.
 | Khách thuê | `0923456789@tenant.local` | `Tam@864209` | Mật khẩu tạm, buộc đổi khi đăng nhập |
 | Khách thuê | `mai@ancu.vn` | `12345678` | Chưa được xếp phòng |
 | Khách thuê | `bich@ancu.vn` | `12345678` | Tài khoản đang bị khóa |
-
-Trang đăng nhập ẩn danh sách tài khoản mẫu khi chạy ở chế độ Supabase.
 
 ## Cấu trúc
 
@@ -55,7 +63,7 @@ css/admin.css              Tinh chỉnh cho chủ trọ
 css/quanly.css             Tinh chỉnh cho quản lý
 css/khachthue.css          Tinh chỉnh cho khách thuê
 
-js/dulieu.js               Dữ liệu mẫu, CRUD, đăng nhập, nghiệp vụ tính tiền
+js/dulieu.js               Lớp dữ liệu localStorage/Supabase, CRUD, đăng nhập, nghiệp vụ tính tiền
 js/chung.js                Định dạng, hộp thoại, khung trang, in hợp đồng
 js/trangchu.js             Hiển thị phòng trống và bảng giá
 js/dangnhap.js             Xử lý đăng nhập và chuyển trang theo vai trò
@@ -103,7 +111,7 @@ chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo prof
 [`supabase/bootstrap_owner.sql`](./supabase/bootstrap_owner.sql). Nếu profile đã tạo và đăng nhập
 được thì bỏ qua các bước này.
 
-### Cấu hình frontend và mời người dùng
+### Cấu hình frontend và cấp tài khoản
 
 1. Với Netlify, thêm biến môi trường `SUPABASE_URL` và
    `SUPABASE_PUBLISHABLE_KEY` trong **Site configuration → Environment variables**.
@@ -112,11 +120,35 @@ chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo prof
    Publishable/anon key là khóa công khai và sẽ được trình duyệt tải xuống; biến môi trường build
    không biến nó thành bí mật. Không bao giờ đưa `service_role` hoặc secret key vào frontend.
    Bảo vệ dữ liệu bằng RLS và policy trong Supabase.
-2. Dùng static server (không mở trang bằng `file://`). Trong Supabase, mở **Authentication →
+2. Để chạy Supabase local mà không đăng nhập tài khoản Supabase, cài Docker và Supabase CLI.
+   Nếu chưa có `supabase/config.toml`, chạy `supabase init` một lần, rồi khởi động stack local:
+
+   ```text
+   supabase start
+   supabase migration up
+   ```
+
+   Lấy API URL và `anon` key trong kết quả `supabase start` (hoặc chạy `supabase status`).
+   Tạo người dùng trong Supabase Studio local (URL thường là `http://127.0.0.1:54323`), rồi tạo
+   profile tương ứng trong database local. Người dùng Auth trên cloud không tự xuất hiện ở local.
+   Không thể bỏ key: Supabase API, kể cả local, vẫn cần publishable/anon key; dùng key local do CLI
+   cấp, tuyệt đối không dùng `service_role`/secret key ở frontend. Tạo cấu hình cho ứng dụng trong
+   PowerShell tại thư mục dự án (thay giá trị bên dưới bằng thông tin local):
+
+   ```powershell
+   $env:SUPABASE_URL = "http://127.0.0.1:54321"
+   $env:SUPABASE_ANON_KEY = "<local-anon-key>"
+   node scripts/generate-supabase-config.js
+   python -m http.server 8000
+   ```
+
+   Mở `http://localhost:8000/`. Khi đổi lại sang Supabase hosted, đặt URL HTTPS và publishable/anon
+   key của project hosted rồi chạy lại script. File cấu hình sinh ra là `js/supabase-config.js`.
+3. Với Supabase hosted, dùng static server (không mở trang bằng `file://`). Trong Supabase, mở **Authentication →
    URL Configuration** và thêm địa chỉ trang đăng nhập cùng trang đặt lại mật khẩu vào
    **Redirect URLs**, ví dụ `http://localhost:8000/html/dangnhap.html` và
    `http://localhost:8000/html/datlaimatkhau.html`. Khi deploy, thêm hai URL tương ứng trên domain thật.
-3. Cài Supabase CLI, mở terminal tại thư mục dự án, liên kết project và deploy Edge Function:
+4. Cài Supabase CLI, mở terminal tại thư mục dự án, liên kết project hosted và deploy Edge Function:
 
    ```text
    supabase login
@@ -125,42 +157,44 @@ chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo prof
    ```
 
    Project ref nằm trong Project URL. Function xác minh người gọi là chủ trọ đang hoạt động,
-   gửi email mời qua Supabase Auth và tạo profile; service-role key chỉ được dùng phía Supabase,
-   không đặt trong mã nguồn.
-4. Cấu hình SMTP gửi email trong Supabase trước khi dùng thật. Giới hạn email mặc định của
-   Supabase chỉ phù hợp thử nghiệm; người được mời cần mở email và đặt mật khẩu.
-5. Đăng nhập bằng tài khoản chủ trọ đã tạo. Để thử ứng dụng khi chưa có dữ liệu thật, mở
-   **Tài khoản → Nạp dữ liệu mẫu** hoặc chạy
-   [`supabase/seed_mock_data.sql`](./supabase/seed_mock_data.sql) trong SQL Editor. Script SQL chỉ
-   chạy khi có đúng một chủ trọ đang hoạt động và chủ trọ đó chưa có bản ghi nghiệp vụ; script sẽ
-   từ chối nếu đã có dữ liệu để tránh trộn dữ liệu mẫu với dữ liệu thật. Dữ liệu mẫu không tạo
-   tài khoản Supabase Auth; chỉ tài khoản chủ trọ hiện có đăng nhập được. Muốn thử vai trò quản lý
-   hoặc khách thuê, hãy mời họ bằng email có thể nhận thư. Nếu có dữ liệu cũ trong localStorage,
-   dùng riêng nút **Nhập dữ liệu cũ**.
-6. Thêm cơ sở, hồ sơ quản lý/khách thuê và mời họ bằng email. Mỗi quản lý phải được phân công
-   vào một cơ sở trước khi gửi lời mời.
+   tạo tài khoản Supabase Auth kèm mật khẩu tạm rồi tạo profile; service-role key chỉ được
+   dùng phía Supabase, không đặt trong mã nguồn.
+5. Không cần cấu hình SMTP khi thử nghiệm: chủ trọ cấp tài khoản là người dùng đăng nhập
+   được ngay bằng email và mật khẩu hiện trong hộp thoại. Hãy sao chép mật khẩu đó trước khi đóng.
+6. Đăng nhập bằng tài khoản chủ trọ đã tạo. Khi Supabase chưa có dữ liệu nghiệp vụ và
+   muốn thử ứng dụng, chạy
+   [`supabase/seed_mock_data.sql`](./supabase/seed_mock_data.sql) trong SQL Editor. Script
+   SQL chỉ chạy khi có đúng một chủ trọ đang hoạt động và chủ trọ đó chưa có bản ghi
+   nghiệp vụ; script sẽ từ chối nếu đã có dữ liệu để tránh trộn dữ liệu mẫu với dữ liệu
+   thật. Dữ liệu mẫu không tạo tài khoản Supabase Auth; chỉ tài khoản chủ trọ hiện có
+   đăng nhập được. Muốn thử vai trò quản lý hoặc khách thuê, hãy cấp tài khoản cho họ
+   trong ứng dụng. Nếu có dữ liệu cũ trong localStorage, dùng riêng nút **Nhập dữ liệu cũ**.
+7. Thêm cơ sở, hồ sơ quản lý/khách thuê rồi cấp tài khoản. Mỗi quản lý phải được phân công
+   vào một cơ sở trước khi cấp tài khoản.
 
 Tạo mới một project không tự động áp dụng migration; kiểm tra trong SQL Editor và không chạy
-lặp lại nếu schema đã tồn tại. Kiểm tra đăng nhập, mời user và phân quyền bằng từng vai trò
+lặp lại nếu schema đã tồn tại. Kiểm tra đăng nhập, cấp tài khoản và phân quyền bằng từng vai trò
 trước khi đưa dữ liệu thật vào.
 
-## Xóa dữ liệu mẫu local
+## Đặt lại dữ liệu local
 
 Mở DevTools → Console và chạy:
 
 ```js
 localStorage.removeItem('ancu_db_v1');
+localStorage.removeItem('ancu_phien_v1');
+sessionStorage.removeItem('ancu_phien_tam_v1');
 location.reload();
 ```
 
-Hoặc xóa dữ liệu trang web trong phần cài đặt trình duyệt. Dữ liệu sẽ được tạo lại từ bộ mẫu
-trong `js/dulieu.js` ở lần tải tiếp theo.
+Hoặc xóa dữ liệu trang web trong phần cài đặt trình duyệt. Ứng dụng sẽ khởi động với dữ
+liệu trống và hiện biểu mẫu tạo tài khoản chủ trọ ở trang đăng nhập.
 
 ## Ghi chú kỹ thuật
 
 - Không dùng framework hoặc build frontend; SDK Supabase được tải từ CDN.
-- Tài khoản demo cũ chỉ là dữ liệu minh họa trong `localStorage`; không sử dụng mật khẩu demo
-  trên Supabase hoặc môi trường thật.
+- Chế độ localStorage chỉ dùng để chạy thử; không dùng mật khẩu ở đó cho Supabase hoặc
+  môi trường thật.
 - Dữ liệu cũ được nâng cấp tự động: các phòng hiện có được gán vào một cơ sở chính để giữ nguyên
   hoạt động; chủ trọ có thể tạo thêm cơ sở và phân công quản lý trong mục **Cơ sở**.
 - Lớp dữ liệu và Supabase Auth nằm trong `js/dulieu.js`; phân quyền dữ liệu cần tiếp tục được

@@ -49,6 +49,31 @@ Deno.serve(async (request: Request) => {
   } catch {
     return respond(400, { error: 'Invalid JSON body' });
   }
+  const action = typeof input.action === 'string' ? input.action : 'create';
+  /* Chủ trọ gửi mật khẩu tạm; nếu thiếu thì máy chủ tự sinh để trả về cho chủ trọ. */
+  const password = typeof input.password === 'string' && input.password.length >= 8
+    ? input.password
+    : 'Tam@' + Math.floor(100000 + Math.random() * 900000);
+
+  /* Đặt lại mật khẩu trực tiếp cho một tài khoản thuộc chủ trọ đang đăng nhập. */
+  if (action === 'reset-password') {
+    const profileId = typeof input.profile_id === 'string' ? input.profile_id : '';
+    if (!profileId) return respond(400, { error: 'Profile is required' });
+    const { data: target, error: targetError } = await adminClient
+      .from('profiles')
+      .select('id, owner_id')
+      .eq('id', profileId)
+      .maybeSingle();
+    if (targetError) return respond(500, { error: 'Unable to verify profile' });
+    if (!target || target.owner_id !== owner.id) {
+      return respond(403, { error: 'Tài khoản không thuộc chủ trọ này.' });
+    }
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(profileId, { password });
+    if (updateError) return respond(400, { error: updateError.message });
+    await adminClient.from('profiles').update({ must_change_password: false }).eq('id', profileId);
+    return respond(200, { password });
+  }
+
   const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
   const fullName = typeof input.full_name === 'string' ? input.full_name.trim() : '';
   const role = input.role;
@@ -100,16 +125,22 @@ Deno.serve(async (request: Request) => {
     tenantFacilityId = typeof tenant.payload?.coSoId === 'string' ? tenant.payload.coSoId : null;
   }
 
-  const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: fullName },
-    redirectTo: new URL('/html/dangnhap.html', request.headers.get('Origin') || supabaseUrl).toString(),
+  const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
   });
-  if (inviteError || !invited.user) {
-    return respond(400, { error: inviteError?.message || 'Unable to send invitation' });
+  if (createError || !created.user) {
+    const message = createError?.message || 'Unable to create user';
+    if (/already/i.test(message)) {
+      return respond(400, { error: 'Email này đã có tài khoản Supabase.' });
+    }
+    return respond(400, { error: message });
   }
 
   const profile = {
-    id: invited.user.id,
+    id: created.user.id,
     owner_id: owner.id,
     role,
     full_name: fullName,
@@ -118,7 +149,7 @@ Deno.serve(async (request: Request) => {
     tenant_id: role === 'tenant' ? tenantId : null,
     facility_id: role === 'manager' ? facilityId : tenantFacilityId,
     active: true,
-    must_change_password: true,
+    must_change_password: false,
   };
   const { data: createdProfile, error: profileError } = await adminClient
     .from('profiles')
@@ -126,8 +157,8 @@ Deno.serve(async (request: Request) => {
     .select('*')
     .single();
   if (profileError) {
-    await adminClient.auth.admin.deleteUser(invited.user.id);
+    await adminClient.auth.admin.deleteUser(created.user.id);
     return respond(400, { error: profileError.message });
   }
-  return respond(200, { profile: createdProfile });
+  return respond(200, { profile: createdProfile, password });
 });

@@ -23,7 +23,7 @@ function taiKhoanCuaNhanVien(nv) {
   return DL.nguoiDungCuaHoSo(nv.id, 'nhanvien');
 }
 
-/* Cấp tài khoản khách thuê rồi hiện mật khẩu tạm */
+/* Cấp tài khoản khách thuê rồi hiện mật khẩu để đăng nhập ngay */
 async function capTaiKhoanKhach(k, xong) {
   try {
     const kq = await DL.capTaiKhoan({
@@ -31,15 +31,10 @@ async function capTaiKhoanKhach(k, xong) {
       hoSoId: k.id, loaiHoSo: 'khach', vaiTro: 'khachthue'
     });
     if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
-    if (kq.invited) {
-      thongBao('Đã gửi email mời đăng nhập tới ' + k.email + '.');
-      if (xong) xong();
-      return;
-    }
     hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, k.hoTen, xong);
   } catch (loi) {
     console.error('Cấp tài khoản khách thất bại:', loi);
-    thongBao('Không thể gửi lời mời Supabase. Vui lòng thử lại.', 'loi');
+    thongBao('Không thể tạo tài khoản. Vui lòng thử lại.', 'loi');
   }
 }
 
@@ -51,15 +46,10 @@ async function capTaiKhoanNhanVien(nv, xong) {
       hoSoId: nv.id, loaiHoSo: 'nhanvien', vaiTro: 'quanly'
     });
     if (!kq.ok) { thongBao(kq.loi, 'loi'); return; }
-    if (kq.invited) {
-      thongBao('Đã gửi email mời đăng nhập tới ' + nv.email + '.');
-      if (xong) xong();
-      return;
-    }
     hienMatKhauTam(kq.nguoidung.tenDangNhap, kq.matKhau, nv.hoTen, xong);
   } catch (loi) {
     console.error('Cấp tài khoản quản lý thất bại:', loi);
-    thongBao('Không thể gửi lời mời Supabase. Vui lòng thử lại.', 'loi');
+    thongBao('Không thể tạo tài khoản. Vui lòng thử lại.', 'loi');
   }
 }
 
@@ -371,7 +361,7 @@ function moFormKhach(k, xong, quyen) {
   const lop = moHop({
     rong: true,
     tieuDe: laSua ? 'Sửa hồ sơ khách thuê' : 'Thêm khách thuê',
-    moTa: laSua ? 'Tài khoản đăng nhập được quản lý riêng bằng nút “Tài khoản” trong danh sách.' : 'Có thể cấp tài khoản ngay và nhận mật khẩu tạm sau khi lưu.',
+    moTa: laSua ? 'Tài khoản đăng nhập được quản lý riêng bằng nút “Tài khoản” trong danh sách.' : 'Có thể cấp tài khoản ngay và nhận mật khẩu sau khi lưu.',
     noiDung:
       '<form class="bieu-mau" id="formKhach">' +
         '<div class="nhom-thong-tin"><h3>Thông tin cá nhân</h3><div class="luoi-nhap">' +
@@ -393,7 +383,7 @@ function moFormKhach(k, xong, quyen) {
           '<div class="nhom"><label for="fkGhiChu">Ghi chú</label><input id="fkGhiChu" class="o-nhap" value="' + thoat(laSua ? k.ghiChu : '') + '"></div>' +
         '</div></div>' +
         (laSua ? '' :
-          '<div class="nhom-thong-tin"><label class="hop-chon"><input type="checkbox" id="fkCapTk" checked> Cấp tài khoản ngay và hiển thị mật khẩu tạm</label>' +
+          '<div class="nhom-thong-tin"><label class="hop-chon"><input type="checkbox" id="fkCapTk" checked> Cấp tài khoản ngay và hiển thị mật khẩu</label>' +
           '<p class="goi-y" style="margin-top:8px">Tên đăng nhập là email của khách; nếu không có email sẽ dùng SĐT@tenant.local.</p></div>') +
       '</form>',
     chanTrang:
@@ -478,11 +468,11 @@ function moTaiKhoanKhach(k, xong) {
       '<div class="the-tai-khoan">' +
         '<div><h4>Tên đăng nhập</h4><p class="ma-don">' + thoat(ten) + '</p>' +
         '<p>Trạng thái: ' + nhanTaiKhoan(u) + '</p></div>' +
-        (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Khách đã tự đổi mật khẩu') + '</p></div>' : '') +
+        (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Mật khẩu do chủ trọ cấp') + '</p></div>' : '') +
       '</div>' +
       '<p class="ghi-chu-nho">' + (DL.cheDoSupabase
-        ? 'Khách thuê kích hoạt tài khoản qua liên kết gửi tới email.'
-        : 'Mật khẩu tạm chỉ hiển thị một lần. Khách sẽ buộc đổi mật khẩu ở lần đăng nhập kế tiếp.') + '</p>',
+        ? 'Tài khoản được tạo trực tiếp trong Supabase Auth với mật khẩu do chủ trọ cấp.'
+        : 'Khách đăng nhập bằng tên đăng nhập và mật khẩu do chủ trọ cấp.') + '</p>',
     chanTrang:
       (u
         ? '<button class="nut nut--ngoc" data-dong>Đóng</button>' +
@@ -498,16 +488,14 @@ function moTaiKhoanKhach(k, xong) {
   }
 
   document.getElementById('tkDatLai').onclick = async function () {
-    const dongY = await hoi('Đặt lại mật khẩu?', DL.cheDoSupabase
-      ? 'Một liên kết đặt mật khẩu mới sẽ được gửi tới email của khách thuê.'
-      : 'Mật khẩu hiện tại sẽ bị thay bằng mật khẩu tạm mới.', 'Đặt lại');
+    const dongY = await hoi('Đặt lại mật khẩu?', 'Mật khẩu hiện tại sẽ bị thay bằng mật khẩu mới.', 'Đặt lại');
     if (!dongY) return;
     try {
-      await DL.datLaiMatKhau(u.id);
-      thongBao('Đã gửi email đặt lại mật khẩu tới ' + u.tenDangNhap + '.');
+      const matKhau = await DL.datLaiMatKhau(u.id);
+      hienMatKhauTam(u.tenDangNhap, matKhau, k.hoTen, lamMoi);
     } catch (loi) {
-      console.error('Gửi email đặt lại mật khẩu thất bại:', loi);
-      thongBao('Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.', 'loi');
+      console.error('Đặt lại mật khẩu thất bại:', loi);
+      thongBao(loi.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.', 'loi');
     }
   };
 
@@ -1778,13 +1766,11 @@ function manTaiKhoan(quyen) {
           '<div class="vach"></div>' +
           '<button class="nut nut--ngoc" id="nutDangXuatTk">Đăng xuất</button>' +
           (quyen.khoiPhucDuLieu && !DL.cheDoSupabase
-            ? '<div class="vach"></div><p class="ghi-chu-nho">Dữ liệu demo được lưu trên trình duyệt. Có thể khôi phục về bộ dữ liệu mẫu ban đầu.</p>' +
-              '<button class="nut nut--xoa" id="nutKhoiPhuc" style="margin-top:8px">Khôi phục dữ liệu mẫu</button>'
+            ? '<div class="vach"></div><p class="ghi-chu-nho">Bộ dữ liệu thử gồm cơ sở, phòng, khách thuê, hợp đồng, hóa đơn và tài khoản cho cả 3 vai trò. Thao tác này thay toàn bộ dữ liệu đang lưu trên trình duyệt.</p>' +
+              '<button class="nut nut--chinh" id="nutNapDuLieuThu" style="margin-top:8px">Nạp bộ dữ liệu thử</button>'
             : '') +
           (quyen.khoiPhucDuLieu && DL.cheDoSupabase
-            ? '<div class="vach"></div><p class="ghi-chu-nho">Để thử ứng dụng, nạp bộ dữ liệu mẫu (cơ sở, phòng, khách, hợp đồng, hóa đơn và thanh toán). Chỉ nạp khi Supabase chưa có dữ liệu.</p>' +
-              '<button class="nut nut--chinh" id="nutNapDuLieuMau" style="margin-top:8px">Nạp dữ liệu mẫu</button>' +
-              '<p class="ghi-chu-nho" style="margin-top:12px">Hoặc nhập dữ liệu cũ đã lưu trên trình duyệt.</p>' +
+            ? '<div class="vach"></div><p class="ghi-chu-nho">Nhập dữ liệu cũ đã lưu trên trình duyệt vào Supabase.</p>' +
               '<button class="nut nut--ngoc" id="nutNhapDuLieuCu" style="margin-top:8px">Nhập dữ liệu cũ</button>'
             : '') +
         '</div>' +
@@ -1811,14 +1797,22 @@ function manTaiKhoan(quyen) {
     });
   };
 
-  const nutKhoiPhuc = document.getElementById('nutKhoiPhuc');
-  if (nutKhoiPhuc) {
-    nutKhoiPhuc.onclick = async function () {
-      const dongY = await hoi('Khôi phục dữ liệu mẫu?', 'Toàn bộ dữ liệu hiện tại sẽ được thay bằng bộ dữ liệu mẫu ban đầu. Bạn sẽ được đưa về trang đăng nhập.', 'Khôi phục');
+  const nutNapThu = document.getElementById('nutNapDuLieuThu');
+  if (nutNapThu) {
+    nutNapThu.onclick = async function () {
+      const dongY = await hoi('Nạp bộ dữ liệu thử?', 'Toàn bộ dữ liệu trên trình duyệt sẽ được thay bằng bộ dữ liệu thử với tài khoản cho chủ trọ, quản lý và khách thuê. Bạn sẽ được đưa về trang đăng nhập.', 'Nạp dữ liệu thử');
       if (!dongY) return;
-      DL.datLai();
-      DL.dangXuat();
-      location.href = 'dangnhap.html';
+      nutNapThu.disabled = true;
+      try {
+        const soLuong = DL.napBoDuLieuThu();
+        await DL.dangXuat();
+        thongBao('Đã nạp ' + soLuong + ' bản ghi thử. Đăng nhập bằng tài khoản mẫu để tiếp tục.');
+        location.href = 'dangnhap.html';
+      } catch (loi) {
+        console.error('Nạp dữ liệu thử thất bại:', loi);
+        thongBao(loi.message || 'Không thể nạp dữ liệu thử.', 'loi');
+        nutNapThu.disabled = false;
+      }
     };
   }
 
@@ -1834,28 +1828,6 @@ function manTaiKhoan(quyen) {
       } catch (loi) {
         console.error('Nhập dữ liệu cũ thất bại:', loi);
         thongBao(loi.message || 'Không thể nhập dữ liệu cũ.', 'loi');
-      }
-    };
-  }
-
-  const nutNapMau = document.getElementById('nutNapDuLieuMau');
-  if (nutNapMau) {
-    nutNapMau.onclick = async function () {
-      const dongY = await hoi(
-        'Nạp dữ liệu mẫu?',
-        'Tạo dữ liệu demo cho hai cơ sở với phòng, khách thuê, hợp đồng, hóa đơn, thanh toán và chi phí. Không tạo tài khoản đăng nhập demo. Chỉ nạp được khi Supabase chưa có dữ liệu.',
-        'Nạp dữ liệu mẫu'
-      );
-      if (!dongY) return;
-      nutNapMau.disabled = true;
-      try {
-        const soLuong = await DL.napDuLieuMau();
-        thongBao('Đã nạp ' + soLuong + ' bản ghi mẫu vào Supabase.');
-        location.reload();
-      } catch (loi) {
-        console.error('Nạp dữ liệu mẫu thất bại:', loi);
-        thongBao(loi.message || 'Không thể nạp dữ liệu mẫu.', 'loi');
-        nutNapMau.disabled = false;
       }
     };
   }
