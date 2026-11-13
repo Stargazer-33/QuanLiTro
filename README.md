@@ -105,11 +105,27 @@ Cuối cùng chạy
 [`supabase/migrations/202611110003_secure_profile_updates.sql`](./supabase/migrations/202611110003_secure_profile_updates.sql)
 để chỉ cho phép chủ trọ cập nhật trạng thái hồ sơ của nhân viên/khách thuê; user chỉ tự bỏ cờ
 bắt buộc đổi mật khẩu sau khi đã đổi mật khẩu thành công.
+Chạy tiếp
+[`supabase/migrations/202611110004_tenant_invoice_view.sql`](./supabase/migrations/202611110004_tenant_invoice_view.sql)
+để khách thuê tăng được lượt mở hóa đơn, và
+[`supabase/migrations/202611110005_tenant_meter_readings.sql`](./supabase/migrations/202611110005_tenant_meter_readings.sql)
+để khách thuê đọc được chỉ số điện nước của phòng mình cùng dữ liệu công khai cho trang giới thiệu.
 
 Nếu chưa cài database, chạy migration một lần trong **Supabase → SQL Editor**. Tạo người dùng
-chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo profile theo hướng dẫn trong
-[`supabase/bootstrap_owner.sql`](./supabase/bootstrap_owner.sql). Nếu profile đã tạo và đăng nhập
-được thì bỏ qua các bước này.
+chủ trọ đầu tiên tại **Authentication → Users** (bật Auto Confirm), sau đó chạy
+[`supabase/bootstrap_owner.sql`](./supabase/bootstrap_owner.sql) sau khi sửa email trong file.
+Cách nhanh hơn nếu có service role key:
+
+```powershell
+$env:SUPABASE_URL = "https://<project-ref>.supabase.co"
+$env:SUPABASE_SERVICE_ROLE_KEY = "<service-role-key>"
+$env:ADMIN_EMAIL = "admin@example.com"
+$env:ADMIN_PASSWORD = "MatKhau123!"
+node scripts/create-admin.js
+```
+
+Script tạo/cập nhật user Auth và profile owner, sau đó in ra thông tin đăng nhập. Không commit
+service role key.
 
 ### Cấu hình frontend và cấp tài khoản
 
@@ -159,8 +175,18 @@ chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo prof
    Project ref nằm trong Project URL. Function xác minh người gọi là chủ trọ đang hoạt động,
    tạo tài khoản Supabase Auth kèm mật khẩu tạm rồi tạo profile; service-role key chỉ được
    dùng phía Supabase, không đặt trong mã nguồn.
+
+   Có thể deploy mà không cần CLI: mở **Edge Functions → invite-user** trong Supabase Dashboard,
+   dán toàn bộ nội dung `supabase/functions/invite-user/index.ts` rồi bấm **Deploy**. Bản mới dùng
+   `admin.createUser` với `email_confirm: true` nên **không gửi email mời/xác nhận**; email chỉ là
+   tên đăng nhập. Nếu gặp lỗi *email rate limit exceeded* nghĩa là đang chạy bản cũ dùng
+   `inviteUserByEmail` — deploy lại hàm là hết.
 5. Không cần cấu hình SMTP khi thử nghiệm: chủ trọ cấp tài khoản là người dùng đăng nhập
    được ngay bằng email và mật khẩu hiện trong hộp thoại. Hãy sao chép mật khẩu đó trước khi đóng.
+   Nếu hồ sơ chưa có email, hệ thống tự dùng `SĐT@tenant.local` (hoặc mã hồ sơ nếu chưa có SĐT)
+   làm tên đăng nhập; địa chỉ này không cần nhận thư. Hộp thoại có nút **Sao chép tin nhắn** để
+   gửi qua Zalo/Messenger/SMS. Tài khoản dùng `@tenant.local` không nhận được thư đặt lại mật
+   khẩu; khi quên, chủ trọ mở hồ sơ và bấm **Đặt lại mật khẩu** để cấp mật khẩu tạm mới.
 6. Đăng nhập bằng tài khoản chủ trọ đã tạo. Khi Supabase chưa có dữ liệu nghiệp vụ và
    muốn thử ứng dụng, chạy
    [`supabase/seed_mock_data.sql`](./supabase/seed_mock_data.sql) trong SQL Editor. Script
@@ -169,8 +195,8 @@ chủ trọ đầu tiên tại **Authentication → Users**, sau đó tạo prof
    thật. Dữ liệu mẫu không tạo tài khoản Supabase Auth; chỉ tài khoản chủ trọ hiện có
    đăng nhập được. Muốn thử vai trò quản lý hoặc khách thuê, hãy cấp tài khoản cho họ
    trong ứng dụng. Nếu có dữ liệu cũ trong localStorage, dùng riêng nút **Nhập dữ liệu cũ**.
-7. Thêm cơ sở, hồ sơ quản lý/khách thuê rồi cấp tài khoản. Mỗi quản lý phải được phân công
-   vào một cơ sở trước khi cấp tài khoản.
+7. Thêm cơ sở, hồ sơ quản lý/khách thuê rồi cấp tài khoản. Có thể phân công quản lý vào cơ sở
+   trước rồi mới cấp tài khoản; mỗi quản lý chỉ phụ trách một cơ sở.
 
 Tạo mới một project không tự động áp dụng migration; kiểm tra trong SQL Editor và không chạy
 lặp lại nếu schema đã tồn tại. Kiểm tra đăng nhập, cấp tài khoản và phân quyền bằng từng vai trò

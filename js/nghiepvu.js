@@ -466,12 +466,12 @@ function moTaiKhoanKhach(k, xong) {
     moTa: 'Tài khoản dùng để đăng nhập trang khách thuê.',
     noiDung:
       '<div class="the-tai-khoan">' +
-        '<div><h4>Tên đăng nhập</h4><p class="ma-don">' + thoat(ten) + '</p>' +
+        '<div><h4>' + (DL.cheDoSupabase ? 'Email đăng nhập' : 'Tên đăng nhập') + '</h4><p class="ma-don">' + thoat(ten) + '</p>' +
         '<p>Trạng thái: ' + nhanTaiKhoan(u) + '</p></div>' +
         (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Mật khẩu do chủ trọ cấp') + '</p></div>' : '') +
       '</div>' +
       '<p class="ghi-chu-nho">' + (DL.cheDoSupabase
-        ? 'Tài khoản được tạo trực tiếp trong Supabase Auth với mật khẩu do chủ trọ cấp.'
+        ? 'Tên đăng nhập là email của khách; nếu chưa có email, hệ thống dùng SĐT@tenant.local. Chủ trọ gửi tên đăng nhập và mật khẩu tạm cho khách qua Zalo, Messenger hoặc SMS.'
         : 'Khách đăng nhập bằng tên đăng nhập và mật khẩu do chủ trọ cấp.') + '</p>',
     chanTrang:
       (u
@@ -527,7 +527,15 @@ async function xoaKhach(id, xong) {
   }
   if (!(await hoi('Xóa hồ sơ khách?', 'Hồ sơ của <b>' + thoat(k.hoTen) + '</b> sẽ bị xóa. Tài khoản đăng nhập (nếu có) cũng bị xóa.', 'Xóa hồ sơ'))) return;
   const u = taiKhoanCuaKhach(k);
-  if (u) DL.xoa('nguoidung', u.id);
+  if (u) {
+    try {
+      await DL.xoaTaiKhoan(u.id);
+    } catch (loi) {
+      console.error('Xóa tài khoản khách thất bại:', loi);
+      thongBao(loi.message || 'Không thể xóa tài khoản đăng nhập.', 'loi');
+      return;
+    }
+  }
   DL.xoa('khach', id);
   thongBao('Đã xóa hồ sơ khách.');
   if (xong) xong();
@@ -1762,7 +1770,7 @@ function manTaiKhoan(quyen) {
         '<div class="the">' +
           '<div class="the__dau"><h3>Hồ sơ</h3></div>' +
           danhSachMoTa([['Họ tên', thoat(nd.hoTen)], ['Vai trò', TEN_VAI_TRO[nd.vaiTro] || nd.vaiTro],
-            ['Tên đăng nhập', '<span class="ma-don">' + thoat(nd.tenDangNhap) + '</span>']].concat(moTaHoSo)) +
+            [DL.cheDoSupabase ? 'Email đăng nhập' : 'Tên đăng nhập', '<span class="ma-don">' + thoat(nd.tenDangNhap) + '</span>']].concat(moTaHoSo)) +
           '<div class="vach"></div>' +
           '<button class="nut nut--ngoc" id="nutDangXuatTk">Đăng xuất</button>' +
           (quyen.khoiPhucDuLieu && !DL.cheDoSupabase

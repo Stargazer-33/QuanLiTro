@@ -611,7 +611,7 @@ function manKhachCaNhan() {
             ['Số điện thoại', thoat(k.sdt)],
             ['CCCD', thoat(k.cccd)],
             ['Email', thoat(k.email) || '—'],
-            ['Tên đăng nhập', '<span class="ma-don">' + thoat(nd.tenDangNhap) + '</span>'],
+            [DL.cheDoSupabase ? 'Email đăng nhập' : 'Tên đăng nhập', '<span class="ma-don">' + thoat(nd.tenDangNhap) + '</span>'],
             ['Phòng', p ? thoat(p.ma) + ' · ' + thoat(p.ten) : 'Chưa xếp phòng'],
             ['Trạng thái hồ sơ', k.trangThai === 'dangthue' ? 'Đang thuê' : 'Đã rời đi']
           ]) +

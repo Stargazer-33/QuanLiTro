@@ -92,6 +92,17 @@ function ganQuenMatKhau() {
     if (DL.cheDoSupabase) {
       const email = window.prompt('Nhập email tài khoản để nhận liên kết đặt lại mật khẩu:');
       if (!email) return;
+      /* Tài khoản dùng SĐT@tenant.local không nhận được thư:
+         chủ trọ phải cấp lại mật khẩu trong ứng dụng. */
+      if (/@tenant\.local$/i.test(email.trim())) {
+        moHop({
+          tieuDe: 'Không gửi được email đặt lại',
+          noiDung: '<p class="chu-mo">Tài khoản này dùng số điện thoại làm tên đăng nhập nên không ' +
+            'nhận được thư. Vui lòng liên hệ chủ trọ hoặc quản lý để được cấp lại mật khẩu tạm.</p>',
+          chanTrang: '<button class="nut nut--chinh" data-dong>Đã hiểu</button>'
+        });
+        return;
+      }
       DL.guiEmailDatLai(email).then(function () {
         thongBao('Nếu email tồn tại trong hệ thống, liên kết đặt lại mật khẩu sẽ được gửi.');
       }).catch(function (loi) {

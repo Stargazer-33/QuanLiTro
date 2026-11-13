@@ -74,6 +74,24 @@ Deno.serve(async (request: Request) => {
     return respond(200, { password });
   }
 
+  /* Xóa tài khoản Auth + profile (chỉ chủ trọ, không xóa được chủ trọ khác). */
+  if (action === 'delete-user') {
+    const profileId = typeof input.profile_id === 'string' ? input.profile_id : '';
+    if (!profileId) return respond(400, { error: 'Profile is required' });
+    const { data: target, error: targetError } = await adminClient
+      .from('profiles')
+      .select('id, owner_id, role')
+      .eq('id', profileId)
+      .maybeSingle();
+    if (targetError) return respond(500, { error: 'Unable to verify profile' });
+    if (!target || target.owner_id !== owner.id || target.role === 'owner') {
+      return respond(403, { error: 'Tài khoản không thuộc chủ trọ này.' });
+    }
+    const { error: deleteError } = await adminClient.auth.admin.deleteUser(profileId);
+    if (deleteError) return respond(400, { error: deleteError.message });
+    return respond(200, { deleted: true });
+  }
+
   const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
   const fullName = typeof input.full_name === 'string' ? input.full_name.trim() : '';
   const role = input.role;

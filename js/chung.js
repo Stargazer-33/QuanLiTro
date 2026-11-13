@@ -430,25 +430,40 @@ function hienDoiMatKhauBatBuoc(nd) {
 
 /* ---------- Mật khẩu tạm ---------- */
 
-/* Hiện mật khẩu tạm một lần, kèm nút sao chép. xong: hàm gọi khi đóng */
+/* Hiện thông tin đăng nhập một lần, kèm nút sao chép. xong: hàm gọi khi đóng */
 function hienMatKhauTam(tenDangNhap, matKhau, hoTen, xong) {
+  const laEmail = !!DL.cheDoSupabase;
+  const nhanTen = laEmail ? 'Email đăng nhập' : 'Tên đăng nhập';
+  let linkDangNhap = 'html/dangnhap.html';
+  try { linkDangNhap = new URL('dangnhap.html', location.href).href; } catch (e) { /* giữ đường dẫn tương đối */ }
+  const tinNhan = 'Thông tin đăng nhập nhà trọ L.Maria\n' +
+    nhanTen + ': ' + tenDangNhap + '\n' +
+    'Mật khẩu tạm: ' + matKhau + '\n' +
+    'Đăng nhập tại: ' + linkDangNhap + '\n' +
+    'Vui lòng đổi mật khẩu sau khi đăng nhập.';
+
   const lop = moHop({
     tieuDe: 'Thông tin đăng nhập',
     moTa: 'Mật khẩu chỉ hiển thị một lần. Hãy sao chép và gửi cho ' + thoat(hoTen) + '.',
     noiDung:
       '<div class="khoi-mat-khau">' +
-        '<p class="khoi-mat-khau__nhan">Tên đăng nhập</p>' +
+        '<p class="khoi-mat-khau__nhan">' + nhanTen + '</p>' +
         '<div class="khoi-mat-khau__dong"><code>' + thoat(tenDangNhap) + '</code>' +
         '<button type="button" class="nut nut--ngoc nut--nho" data-chep-ten>Sao chép</button></div>' +
-        '<p class="khoi-mat-khau__nhan">Mật khẩu</p>' +
+        '<p class="khoi-mat-khau__nhan">Mật khẩu tạm</p>' +
         '<div class="khoi-mat-khau__dong"><code class="khoi-mat-khau__mk">' + thoat(matKhau) + '</code>' +
         '<button type="button" class="nut nut--ngoc nut--nho" data-chep-mk>Sao chép</button></div>' +
-        '<p class="ghi-chu-nho">Người dùng đăng nhập bằng tên đăng nhập và mật khẩu này.</p>' +
+        '<p class="ghi-chu-nho">Gửi thông tin này cho người dùng qua Zalo, Messenger hoặc SMS. ' +
+        'Nếu quên mật khẩu, dùng nút “Đặt lại mật khẩu” để cấp mật khẩu mới.</p>' +
       '</div>',
-    chanTrang: '<button class="nut nut--chinh" data-dong>Đã hiểu</button>'
+    chanTrang:
+      '<button class="nut nut--ngoc" data-chep-tin>Sao chép tin nhắn</button>' +
+      '<button class="nut nut--chinh" data-dong>Đã hiểu</button>'
   });
   lop.querySelector('[data-chep-ten]').onclick = function () { saoChep(tenDangNhap); };
   lop.querySelector('[data-chep-mk]').onclick = function () { saoChep(matKhau); };
+  const nutTin = lop.querySelector('[data-chep-tin]');
+  if (nutTin) nutTin.onclick = function () { saoChep(tinNhan); };
   lop._khiDong = function () { if (typeof xong === 'function') xong(); };
 }
 

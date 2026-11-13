@@ -252,7 +252,7 @@ function moFormNhanVien(nv, xong) {
 function moTaiKhoanNhanVien(nv, xong) {
   if (!nv) return;
   const u = taiKhoanCuaNhanVien(nv);
-  const ten = u ? u.tenDangNhap : nv.email;
+  const ten = u ? u.tenDangNhap : DL.tenDangNhapTuHoSo({ email: nv.email, sdt: nv.sdt, hoSoId: nv.id, loaiHoSo: 'nhanvien' });
   if (!u && nv.chucVu !== 'Quản lý cơ sở') {
     moHop({
       tieuDe: 'Chỉ quản lý cơ sở có tài khoản vận hành',
@@ -272,12 +272,12 @@ function moTaiKhoanNhanVien(nv, xong) {
     moTa: 'Tài khoản quản lý chỉ thao tác trong phạm vi được giao.',
     noiDung:
       '<div class="the-tai-khoan">' +
-        '<div><h4>Tên đăng nhập</h4><p class="ma-don">' + thoat(ten) + '</p>' +
+        '<div><h4>' + (DL.cheDoSupabase ? 'Email đăng nhập' : 'Tên đăng nhập') + '</h4><p class="ma-don">' + thoat(ten) + '</p>' +
         '<p>Trạng thái: ' + nhanTaiKhoan(u) + '</p></div>' +
         (u ? '<div><h4>Mật khẩu</h4><p>' + (u.phaiDoiMatKhau ? 'Đang dùng mật khẩu tạm' : 'Mật khẩu do chủ trọ cấp') + '</p></div>' : '') +
       '</div>' +
       '<p class="ghi-chu-nho">' + (DL.cheDoSupabase
-        ? 'Tài khoản được tạo trực tiếp trong Supabase Auth với mật khẩu do chủ trọ cấp.'
+        ? 'Tên đăng nhập là email của nhân viên; nếu chưa có email, hệ thống dùng SĐT@tenant.local. Chủ trọ gửi tên đăng nhập và mật khẩu tạm cho nhân viên.'
         : 'Nhân viên đăng nhập bằng tên đăng nhập và mật khẩu do chủ trọ cấp.') + '</p>',
     chanTrang:
       (u
@@ -340,7 +340,15 @@ async function xoaNhanVien(id, xong) {
   }
   if (!(await hoi('Xóa nhân viên?', 'Hồ sơ của <b>' + thoat(nv.hoTen) + '</b> và tài khoản đăng nhập (nếu có) sẽ bị xóa.', 'Xóa nhân viên'))) return;
   const u = taiKhoanCuaNhanVien(nv);
-  if (u) DL.xoa('nguoidung', u.id);
+  if (u) {
+    try {
+      await DL.xoaTaiKhoan(u.id);
+    } catch (loi) {
+      console.error('Xóa tài khoản nhân viên thất bại:', loi);
+      thongBao(loi.message || 'Không thể xóa tài khoản đăng nhập.', 'loi');
+      return;
+    }
+  }
   DL.xoa('nhanvien', id);
   thongBao('Đã xóa nhân viên.');
   if (xong) xong();
@@ -404,8 +412,9 @@ function veCoSo() {
 function moFormCoSo(c, xong) {
   const laSua = !!c;
   const quanLyOptions = DL.lay('nhanvien').filter(function (nv) {
+    if (nv.chucVu !== 'Quản lý cơ sở') return false;
     const taiKhoan = taiKhoanCuaNhanVien(nv);
-    if (nv.chucVu !== 'Quản lý cơ sở' || !taiKhoan || taiKhoan.vaiTro !== 'quanly') return false;
+    if (taiKhoan && taiKhoan.vaiTro !== 'quanly') return false;
     return !DL.lay('coso').some(function (coSo) {
       return coSo.quanLyId === nv.id && (!laSua || coSo.id !== c.id);
     });
@@ -413,9 +422,10 @@ function moFormCoSo(c, xong) {
   const luaChonQuanLy =
     '<option value="">— Chưa phân công —</option>' +
     quanLyOptions.map(function (nv) {
+      const chuaCap = taiKhoanCuaNhanVien(nv) ? '' : ' (chưa cấp tài khoản)';
       return '<option value="' + thoat(nv.id) + '"' +
         (laSua && c.quanLyId === nv.id ? ' selected' : '') + '>' +
-        thoat(nv.hoTen) + ' · ' + thoat(nv.email) + '</option>';
+        thoat(nv.hoTen) + ' · ' + thoat(nv.email) + chuaCap + '</option>';
     }).join('');
 
   moHop({
@@ -427,7 +437,7 @@ function moFormCoSo(c, xong) {
           '<div class="nhom"><label for="csTen">Tên cơ sở *</label><input id="csTen" class="o-nhap" value="' + thoat(laSua ? c.ten : '') + '" placeholder="VD: Cơ sở Nguyễn Trãi"></div>' +
           '<div class="nhom"><label for="csDiaChi">Địa chỉ</label><input id="csDiaChi" class="o-nhap" value="' + thoat(laSua ? c.diaChi : '') + '"></div>' +
           '<div class="nhom rong"><label for="csQuanLy">Quản lý phụ trách *</label><select id="csQuanLy" class="o-chon">' + luaChonQuanLy + '</select>' +
-            '<p class="ghi-chu-nho">Chỉ nhân viên đã có tài khoản quản lý mới được chọn. Một quản lý chỉ phụ trách một cơ sở.</p></div>' +
+            '<p class="ghi-chu-nho">Có thể phân công nhân viên trước, sau đó cấp tài khoản quản lý. Một quản lý chỉ phụ trách một cơ sở.</p></div>' +
         '</div>' +
       '</form>',
     chanTrang:

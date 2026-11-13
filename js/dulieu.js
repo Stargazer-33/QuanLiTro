@@ -330,6 +330,21 @@ const DL = (function () {
       nguoiDungHienTai = null;
       profileHienTai = null;
       boNho = khoDuLieuTrong();
+      /* Trang giới thiệu công khai: nạp phòng trống và bảng giá dịch vụ
+         qua policy dành cho anon (xem migration 202611110005). */
+      try {
+        const congKhai = await supabaseClient.from('app_records')
+          .select('table_name, record_id, payload')
+          .in('table_name', ['phong', 'dichvu']);
+        if (!congKhai.error) {
+          (congKhai.data || []).forEach(function (hang) {
+            if (!boNho[hang.table_name]) return;
+            boNho[hang.table_name].push(Object.assign({}, hang.payload, { id: hang.record_id }));
+          });
+        }
+      } catch (e) {
+        /* Không chặn trang giới thiệu nếu chưa chạy migration công khai. */
+      }
       return;
     }
     await napNguoiDung(session.user);
@@ -581,6 +596,33 @@ const DL = (function () {
     return true;
   }
 
+  /* Xóa tài khoản Supabase Auth kèm profile (chỉ chủ trọ).
+     Ở chế độ local, xóa thẳng bản ghi người dùng. */
+  async function xoaTaiKhoan(userId) {
+    if (!cheDoSupabase) return xoa('nguoidung', userId);
+    const user = tim('nguoidung', userId);
+    if (!user) return false;
+    if (!profileHienTai || profileHienTai.role !== 'owner') {
+      throw new Error('Chỉ chủ trọ mới được xóa tài khoản.');
+    }
+    await hangDoiGhi;
+    const result = await supabaseClient.functions.invoke('invite-user', {
+      body: { action: 'delete-user', profile_id: userId }
+    });
+    if (result.error) {
+      let loi = result.error.message;
+      try {
+        const body = await result.error.context.json();
+        if (body && body.error) loi = body.error;
+      } catch (e) { /* giữ thông báo mặc định */ }
+      throw new Error(loi);
+    }
+    const ds = boNho.nguoidung || [];
+    const i = ds.findIndex(function (u) { return u.id === userId; });
+    if (i >= 0) ds.splice(i, 1);
+    return true;
+  }
+
   /* Nạp bộ dữ liệu thử cho cả 3 vai trò (chỉ chế độ localStorage) */
   function napBoDuLieuThu() {
     if (cheDoSupabase) {
@@ -694,13 +736,17 @@ const DL = (function () {
     };
   }
 
-  /* Lưu chỉ số điện nước (ghi mới hoặc cập nhật theo kỳ) */
+  /* Lưu chỉ số điện nước (ghi mới hoặc cập nhật theo kỳ).
+     Gắn khachId của hợp đồng hiệu lực để RLS cho khách thuê đọc được chỉ số. */
   function luuChiSo(phongId, ky, du) {
     const daCo = lay('chiso').find(function (c) {
       return c.phongId === phongId && c.ky === ky;
     });
-    if (daCo) return sua('chiso', daCo.id, du);
-    return them('chiso', Object.assign({ phongId: phongId, ky: ky }, du));
+    const hopDong = hopDongHieuLuc(phongId);
+    const duDay = Object.assign({ phongId: phongId, ky: ky }, du);
+    if (hopDong && hopDong.khachId) duDay.khachId = hopDong.khachId;
+    if (daCo) return sua('chiso', daCo.id, duDay);
+    return them('chiso', duDay);
   }
 
   /* ===== Tài khoản & đăng nhập ===== */
@@ -711,11 +757,28 @@ const DL = (function () {
     }) || null;
   }
 
-  /* Đổi email/SĐT thành tên đăng nhập nội bộ */
+  function laEmailHopLe(chu) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(chu || '').trim());
+  }
+
+  /* Đổi email/SĐT thành tên đăng nhập. Nếu hồ sơ chưa có email,
+     tự sinh tên đăng nhập để chủ trọ gửi cho người dùng. */
   function tenDangNhapTuHoSo(hoso) {
-    const email = (hoso.email || '').trim().toLowerCase();
-    if (email) return email;
-    return String(hoso.sdt || '').trim() + '@tenant.local';
+    const email = String(hoso.email || '').trim().toLowerCase();
+    if (laEmailHopLe(email)) return email;
+    return emailTuDongTuHoSo({
+      sdt: hoso.sdt,
+      hoSoId: hoso.hoSoId || hoso.id
+    });
+  }
+
+  /* Sinh tên đăng nhập khi hồ sơ chưa có email: SĐT@tenant.local,
+     nếu không có SĐT thì dùng mã hồ sơ. Tài khoản được tạo với
+     email_confirm = true nên địa chỉ này không cần nhận thư. */
+  function emailTuDongTuHoSo(o) {
+    const sdt = String(o.sdt || '').replace(/\D/g, '');
+    const ma = String(o.hoSoId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return (sdt || ma || Date.now().toString(36)) + '@tenant.local';
   }
 
   function taoMatKhauTam() {
@@ -726,15 +789,24 @@ const DL = (function () {
      Chủ trọ tạo thẳng tài khoản + mật khẩu trong Supabase Auth để người dùng
      đăng nhập ngay, không cần mở email mời. */
   async function capTaiKhoan(o) {
-    const ten = tenDangNhapTuHoSo(o);
+    let ten = tenDangNhapTuHoSo(o);
+    if (!laEmailHopLe(o.email)) {
+      /* Tên tự sinh có thể trùng nếu hai hồ sơ dùng cùng SĐT:
+         thêm mã hồ sơ để không đụng tài khoản khác. */
+      const dsNguoiDung = cheDoSupabase ? (boNho.nguoidung || []) : (doc().nguoidung || []);
+      const trung = dsNguoiDung.some(function (u) {
+        return String(u.tenDangNhap || '').toLowerCase() === ten && u.hoSoId !== o.hoSoId;
+      });
+      if (trung) {
+        const ma = String(o.hoSoId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        ten = ten.replace('@tenant.local', '.' + (ma || Date.now().toString(36)) + '@tenant.local');
+      }
+    }
     if (cheDoSupabase) {
       if (!profileHienTai || profileHienTai.role !== 'owner') {
         return { ok: false, loi: 'Chỉ chủ trọ mới được cấp tài khoản.' };
       }
-      const email = String(o.email || ten).trim().toLowerCase();
-      if (!email || email.indexOf('@') < 1) {
-        return { ok: false, loi: 'Supabase Auth cần địa chỉ email hợp lệ để tạo tài khoản.' };
-      }
+      const email = ten;
       const loai = o.vaiTro === 'quanly' ? 'manager' : 'tenant';
       const coSo = loai === 'manager'
         ? (boNho.coso || []).find(function (c) { return c.quanLyId === o.hoSoId; })
@@ -761,6 +833,13 @@ const DL = (function () {
           const body = await result.error.context.json();
           if (body && body.error) loi = body.error;
         } catch (e) { /* giữ thông báo mặc định */ }
+        if (/rate limit|too many|email.*limit/i.test(loi)) {
+          return {
+            ok: false,
+            loi: 'Hàm invite-user trên Supabase vẫn là bản cũ nên đang gửi email mời và bị giới hạn. ' +
+              'Hãy deploy lại hàm invite-user (xem README) để cấp tài khoản trực tiếp, không gửi email.'
+          };
+        }
         return { ok: false, loi: loi };
       }
       const profile = result.data && result.data.profile;
@@ -1017,7 +1096,7 @@ const DL = (function () {
   }
 
   return {
-    lay: lay, tim: tim, them: them, sua: sua, xoa: xoa,
+    lay: lay, tim: tim, them: them, sua: sua, xoa: xoa, xoaTaiKhoan: xoaTaiKhoan,
     giaTriDaTonTai: giaTriDaTonTai, soBanGhiToanBo: soBanGhiToanBo,
     hopDongHieuLuc: hopDongHieuLuc, hopDongCuaKhach: hopDongCuaKhach,
     hoaDonTrongKy: hoaDonTrongKy, daThu: daThu, conNo: conNo,
