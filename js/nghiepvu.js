@@ -1781,10 +1781,6 @@ function manTaiKhoan(quyen) {
             ? '<div class="vach"></div><p class="ghi-chu-nho">Bộ dữ liệu thử gồm cơ sở, phòng, khách thuê, hợp đồng, hóa đơn và tài khoản cho cả 3 vai trò. Thao tác này thay toàn bộ dữ liệu đang lưu trên trình duyệt.</p>' +
               '<button class="nut nut--chinh" id="nutNapDuLieuThu" style="margin-top:8px">Nạp bộ dữ liệu thử</button>'
             : '') +
-          (quyen.khoiPhucDuLieu && DL.cheDoSupabase
-            ? '<div class="vach"></div><p class="ghi-chu-nho">Nhập dữ liệu cũ đã lưu trên trình duyệt vào Supabase.</p>' +
-              '<button class="nut nut--ngoc" id="nutNhapDuLieuCu" style="margin-top:8px">Nhập dữ liệu cũ</button>'
-            : '') +
         '</div>' +
         '<div class="the">' +
           '<div class="the__dau"><div><h3>Đổi mật khẩu</h3><p>Mật khẩu mới tối thiểu 8 ký tự.</p></div></div>' +
@@ -1824,22 +1820,6 @@ function manTaiKhoan(quyen) {
         console.error('Nạp dữ liệu thử thất bại:', loi);
         thongBao(loi.message || 'Không thể nạp dữ liệu thử.', 'loi');
         nutNapThu.disabled = false;
-      }
-    };
-  }
-
-  const nutNhapCu = document.getElementById('nutNhapDuLieuCu');
-  if (nutNhapCu) {
-    nutNhapCu.onclick = async function () {
-      const dongY = await hoi('Nhập dữ liệu cũ?', 'Các bản ghi hiện có trong trình duyệt sẽ được thêm vào Supabase. Không nhập chồng dữ liệu đã có.', 'Nhập dữ liệu');
-      if (!dongY) return;
-      try {
-        const soLuong = await DL.nhapDuLieuCu();
-        thongBao('Đã nhập ' + soLuong + ' bản ghi vào Supabase.');
-        location.reload();
-      } catch (loi) {
-        console.error('Nhập dữ liệu cũ thất bại:', loi);
-        thongBao(loi.message || 'Không thể nhập dữ liệu cũ.', 'loi');
       }
     };
   }

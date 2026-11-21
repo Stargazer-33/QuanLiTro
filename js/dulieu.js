@@ -1292,21 +1292,6 @@ const DL = (function () {
     return soNhap;
   }
 
-  async function nhapDuLieuCu() {
-    if (!cheDoSupabase || !profileHienTai || profileHienTai.role !== 'owner') {
-      throw new Error('Chỉ chủ trọ đang đăng nhập mới có thể nhập dữ liệu local.');
-    }
-    let cu = null;
-    try {
-      cu = JSON.parse(localStorage.getItem(KHOA_DB) || 'null');
-    } catch (loi) {
-      throw new Error('Dữ liệu localStorage không phải JSON hợp lệ.');
-    }
-    if (!cu || !Array.isArray(cu.phong)) throw new Error('Không tìm thấy dữ liệu cũ trong localStorage.');
-    delete cu.nguoidung;
-    return ghiBoDuLieuVaoSupabase(cu, 'Không tìm thấy dữ liệu cũ trong localStorage.');
-  }
-
   return {
     lay: lay, tim: tim, them: them, sua: sua, xoa: xoa, xoaTaiKhoan: xoaTaiKhoan,
     giaTriDaTonTai: giaTriDaTonTai, soBanGhiToanBo: soBanGhiToanBo,
@@ -1324,7 +1309,7 @@ const DL = (function () {
     coSoCuaPhien: coSoCuaPhien, khoiTao: khoiTao, choGhiXong: function () { return hangDoiGhi; },
     taiLaiDuLieu: taiLaiDuLieu, batDauTheoDoi: batDauTheoDoi, ngatTheoDoi: ngatTheoDoi,
     tangLuotMoHoaDon: tangLuotMoHoaDon,
-    nhapDuLieuCu: nhapDuLieuCu, napBoDuLieuThu: napBoDuLieuThu, cheDoSupabase: cheDoSupabase
+    napBoDuLieuThu: napBoDuLieuThu, cheDoSupabase: cheDoSupabase
   };
 })();
 
