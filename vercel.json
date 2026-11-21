@@ -1,0 +1,5 @@
+{
+  "buildCommand": "node scripts/generate-supabase-config.js",
+  "outputDirectory": ".",
+  "framework": null
+}
