@@ -4,9 +4,32 @@
    Chỉ HTML/CSS/JS thuần.
    ============================================================ */
 
-const KHOA_DB = 'ancu_db_v1';
-const KHOA_PHIEN = 'ancu_phien_v1';
-const KHOA_PHIEN_TAM = 'ancu_phien_tam_v1';
+const KHOA_DB = 'lmaria_db_v1';
+const KHOA_PHIEN = 'lmaria_phien_v1';
+const KHOA_PHIEN_TAM = 'lmaria_phien_tam_v1';
+
+/* Khoá cũ trước khi đổi tên thương hiệu: đọc lại một lần để không mất dữ liệu/phiên đang dùng. */
+const KHOA_DB_CU = 'ancu_db_v1';
+const KHOA_PHIEN_CU = 'ancu_phien_v1';
+const KHOA_PHIEN_TAM_CU = 'ancu_phien_tam_v1';
+
+/* Chuyển dữ liệu và phiên từ khoá cũ sang khoá L.Maria.
+   Chỉ chạy khi khoá mới chưa có nên không ghi đè dữ liệu hiện tại. */
+function chuyenKhoaCu() {
+  try {
+    if (!localStorage.getItem(KHOA_DB) && localStorage.getItem(KHOA_DB_CU)) {
+      localStorage.setItem(KHOA_DB, localStorage.getItem(KHOA_DB_CU));
+    }
+    if (!localStorage.getItem(KHOA_PHIEN) && localStorage.getItem(KHOA_PHIEN_CU)) {
+      localStorage.setItem(KHOA_PHIEN, localStorage.getItem(KHOA_PHIEN_CU));
+    }
+    if (!sessionStorage.getItem(KHOA_PHIEN_TAM) && sessionStorage.getItem(KHOA_PHIEN_TAM_CU)) {
+      sessionStorage.setItem(KHOA_PHIEN_TAM, sessionStorage.getItem(KHOA_PHIEN_TAM_CU));
+    }
+  } catch (e) {
+    /* Trình duyệt chặn lưu trữ: bỏ qua, ứng dụng vẫn chạy bình thường. */
+  }
+}
 
 /* Sinh id ngẫu nhiên cho bản ghi mới */
 function taoId(tienTo) {
@@ -52,30 +75,30 @@ function duLieuMau() {
     ],
 
     khach: [
-      { id: 'k001', ma: 'K-001', hoTen: 'Nguyễn Văn An', sdt: '0901234567', cccd: '079201001234', email: 'an@ancu.vn', diaChi: '12 Lê Lợi, Quận 1, TP. HCM', queQuan: 'Quảng Nam', phongId: 'p101', coSoId: 'cs001', ngayVao: '2025-01-01', trangThai: 'dangthue', ghiChu: '' },
-      { id: 'k002', ma: 'K-002', hoTen: 'Trần Thị Bích', sdt: '0912345678', cccd: '079202002345', email: 'bich@ancu.vn', diaChi: '45 Hai Bà Trưng, Quận 3, TP. HCM', queQuan: 'Bình Định', phongId: 'p102', coSoId: 'cs001', ngayVao: '2025-06-01', trangThai: 'dangthue', ghiChu: '' },
+      { id: 'k001', ma: 'K-001', hoTen: 'Nguyễn Văn An', sdt: '0901234567', cccd: '079201001234', email: 'an@lmaria.vn', diaChi: '12 Lê Lợi, Quận 1, TP. HCM', queQuan: 'Quảng Nam', phongId: 'p101', coSoId: 'cs001', ngayVao: '2025-01-01', trangThai: 'dangthue', ghiChu: '' },
+      { id: 'k002', ma: 'K-002', hoTen: 'Trần Thị Bích', sdt: '0912345678', cccd: '079202002345', email: 'bich@lmaria.vn', diaChi: '45 Hai Bà Trưng, Quận 3, TP. HCM', queQuan: 'Bình Định', phongId: 'p102', coSoId: 'cs001', ngayVao: '2025-06-01', trangThai: 'dangthue', ghiChu: '' },
       { id: 'k003', ma: 'K-003', hoTen: 'Lê Minh Cường', sdt: '0923456789', cccd: '079203003456', email: '', diaChi: '88 Cách Mạng Tháng 8, Quận 10, TP. HCM', queQuan: 'Đà Nẵng', phongId: 'p201', coSoId: 'cs001', ngayVao: '2025-11-01', trangThai: 'dangthue', ghiChu: 'Dùng SĐT làm tên đăng nhập' },
-      { id: 'k004', ma: 'K-004', hoTen: 'Phạm Thu Hà', sdt: '0934567890', cccd: '079204004567', email: 'ha@ancu.vn', diaChi: '21 Nguyễn Thị Minh Khai, Quận 1, TP. HCM', queQuan: 'Huế', phongId: 'p301', coSoId: 'cs002', ngayVao: '2026-01-10', trangThai: 'dangthue', ghiChu: '' },
+      { id: 'k004', ma: 'K-004', hoTen: 'Phạm Thu Hà', sdt: '0934567890', cccd: '079204004567', email: 'ha@lmaria.vn', diaChi: '21 Nguyễn Thị Minh Khai, Quận 1, TP. HCM', queQuan: 'Huế', phongId: 'p301', coSoId: 'cs002', ngayVao: '2026-01-10', trangThai: 'dangthue', ghiChu: '' },
       { id: 'k005', ma: 'K-005', hoTen: 'Vũ Đức Duy', sdt: '0945678901', cccd: '079205005678', email: '', diaChi: '301 Điện Biên Phủ, Quận 3, TP. HCM', queQuan: 'Nghệ An', phongId: '', coSoId: 'cs001', ngayVao: '2024-08-01', trangThai: 'daroi', ghiChu: 'Đã trả phòng' },
-      { id: 'k006', ma: 'K-006', hoTen: 'Ngô Thị Mai', sdt: '0956789012', cccd: '079206006789', email: 'mai@ancu.vn', diaChi: '9 Trần Hưng Đạo, Quận 5, TP. HCM', queQuan: 'Cần Thơ', phongId: '', coSoId: 'cs001', ngayVao: '', trangThai: 'dangthue', ghiChu: 'Chờ xếp phòng' },
+      { id: 'k006', ma: 'K-006', hoTen: 'Ngô Thị Mai', sdt: '0956789012', cccd: '079206006789', email: 'mai@lmaria.vn', diaChi: '9 Trần Hưng Đạo, Quận 5, TP. HCM', queQuan: 'Cần Thơ', phongId: '', coSoId: 'cs001', ngayVao: '', trangThai: 'dangthue', ghiChu: 'Chờ xếp phòng' },
       { id: 'k007', ma: 'K-007', hoTen: 'Đỗ Văn Hùng', sdt: '0967890123', cccd: '079207007890', email: '', diaChi: '12 Lê Lợi, Quận 1, TP. HCM', queQuan: 'Thanh Hóa', phongId: '', coSoId: 'cs001', ngayVao: '', trangThai: 'daroi', ghiChu: 'Người ở cùng phòng 101' }
     ],
 
     nhanvien: [
-      { id: 'nv001', ma: 'NV-001', hoTen: 'Trần Quốc Bảo', sdt: '0909123456', email: 'quanly@ancu.vn', chucVu: 'Quản lý cơ sở', khuVuc: 'Khu A', ngayVao: '2024-02-01' },
-      { id: 'nv002', ma: 'NV-002', hoTen: 'Lý Thị Hồng', sdt: '0918234567', email: 'hong@ancu.vn', chucVu: 'Kế toán', khuVuc: 'Toàn bộ', ngayVao: '2024-06-15' },
-      { id: 'nv003', ma: 'NV-003', hoTen: 'Phan Văn Tú', sdt: '0927345678', email: 'tu@ancu.vn', chucVu: 'Kỹ thuật', khuVuc: 'Khu B', ngayVao: '2025-03-01' },
-      { id: 'nv004', ma: 'NV-004', hoTen: 'Nguyễn Thị Lan', sdt: '0987654321', email: 'quanly.b@ancu.vn', chucVu: 'Quản lý cơ sở', khuVuc: 'Khu B', ngayVao: '2025-04-01' }
+      { id: 'nv001', ma: 'NV-001', hoTen: 'Trần Quốc Bảo', sdt: '0909123456', email: 'quanly@lmaria.vn', chucVu: 'Quản lý cơ sở', khuVuc: 'Khu A', ngayVao: '2024-02-01' },
+      { id: 'nv002', ma: 'NV-002', hoTen: 'Lý Thị Hồng', sdt: '0918234567', email: 'hong@lmaria.vn', chucVu: 'Kế toán', khuVuc: 'Toàn bộ', ngayVao: '2024-06-15' },
+      { id: 'nv003', ma: 'NV-003', hoTen: 'Phan Văn Tú', sdt: '0927345678', email: 'tu@lmaria.vn', chucVu: 'Kỹ thuật', khuVuc: 'Khu B', ngayVao: '2025-03-01' },
+      { id: 'nv004', ma: 'NV-004', hoTen: 'Nguyễn Thị Lan', sdt: '0987654321', email: 'quanly.b@lmaria.vn', chucVu: 'Quản lý cơ sở', khuVuc: 'Khu B', ngayVao: '2025-04-01' }
     ],
 
     nguoidung: [
-      { id: 'u01', tenDangNhap: 'admin@ancu.vn', matKhau: '12345678', vaiTro: 'admin', hoTen: 'Nguyễn Văn Chủ', hoSoId: null, loaiHoSo: null, trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2024-01-01' },
-      { id: 'u02', tenDangNhap: 'quanly@ancu.vn', matKhau: '12345678', vaiTro: 'quanly', hoTen: 'Trần Quốc Bảo', hoSoId: 'nv001', loaiHoSo: 'nhanvien', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2024-02-01' },
-      { id: 'u07', tenDangNhap: 'quanly.b@ancu.vn', matKhau: '12345678', vaiTro: 'quanly', hoTen: 'Nguyễn Thị Lan', hoSoId: 'nv004', loaiHoSo: 'nhanvien', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2025-04-01' },
-      { id: 'u03', tenDangNhap: 'an@ancu.vn', matKhau: '12345678', vaiTro: 'khachthue', hoTen: 'Nguyễn Văn An', hoSoId: 'k001', loaiHoSo: 'khach', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2025-01-01' },
+      { id: 'u01', tenDangNhap: 'admin@lmaria.vn', matKhau: '12345678', vaiTro: 'admin', hoTen: 'Nguyễn Văn Chủ', hoSoId: null, loaiHoSo: null, trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2024-01-01' },
+      { id: 'u02', tenDangNhap: 'quanly@lmaria.vn', matKhau: '12345678', vaiTro: 'quanly', hoTen: 'Trần Quốc Bảo', hoSoId: 'nv001', loaiHoSo: 'nhanvien', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2024-02-01' },
+      { id: 'u07', tenDangNhap: 'quanly.b@lmaria.vn', matKhau: '12345678', vaiTro: 'quanly', hoTen: 'Nguyễn Thị Lan', hoSoId: 'nv004', loaiHoSo: 'nhanvien', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2025-04-01' },
+      { id: 'u03', tenDangNhap: 'an@lmaria.vn', matKhau: '12345678', vaiTro: 'khachthue', hoTen: 'Nguyễn Văn An', hoSoId: 'k001', loaiHoSo: 'khach', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2025-01-01' },
       { id: 'u04', tenDangNhap: '0923456789@tenant.local', matKhau: 'Tam@864209', vaiTro: 'khachthue', hoTen: 'Lê Minh Cường', hoSoId: 'k003', loaiHoSo: 'khach', trangThai: 'hoatdong', phaiDoiMatKhau: true, ngayTao: '2025-11-01' },
-      { id: 'u05', tenDangNhap: 'mai@ancu.vn', matKhau: '12345678', vaiTro: 'khachthue', hoTen: 'Ngô Thị Mai', hoSoId: 'k006', loaiHoSo: 'khach', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2026-10-20' },
-      { id: 'u06', tenDangNhap: 'bich@ancu.vn', matKhau: '12345678', vaiTro: 'khachthue', hoTen: 'Trần Thị Bích', hoSoId: 'k002', loaiHoSo: 'khach', trangThai: 'khoa', phaiDoiMatKhau: false, ngayTao: '2025-06-01' }
+      { id: 'u05', tenDangNhap: 'mai@lmaria.vn', matKhau: '12345678', vaiTro: 'khachthue', hoTen: 'Ngô Thị Mai', hoSoId: 'k006', loaiHoSo: 'khach', trangThai: 'hoatdong', phaiDoiMatKhau: false, ngayTao: '2026-10-20' },
+      { id: 'u06', tenDangNhap: 'bich@lmaria.vn', matKhau: '12345678', vaiTro: 'khachthue', hoTen: 'Trần Thị Bích', hoSoId: 'k002', loaiHoSo: 'khach', trangThai: 'khoa', phaiDoiMatKhau: false, ngayTao: '2025-06-01' }
     ],
 
     hopdong: [
@@ -240,6 +263,16 @@ const DL = (function () {
   let profileHienTai = null;
   let hangDoiGhi = Promise.resolve();
 
+  /* Trạng thái tự động đồng bộ dữ liệu */
+  let kenhRealtime = null;
+  let henTaiLai = null;
+  let henQuet = null;
+  let henBaoVuaDoi = null;
+  let dangTaiLai = null;
+  let khiDuLieuDoi = null;
+  let daTheoDoi = false;
+  let lanBaoLoi = 0;
+
   const CAC_BANG = [
     'coso', 'phong', 'khach', 'nhanvien', 'nguoidung', 'hopdong',
     'hoadon', 'chiso', 'thanhtoan', 'suco', 'thongbao', 'chiphi', 'dichvu'
@@ -284,6 +317,20 @@ const DL = (function () {
     return ketQua.data;
   }
 
+  /* Chuỗi đại diện dữ liệu để so sánh thay đổi.
+     Sắp xếp bản sao theo id nên không phụ thuộc thứ tự Supabase trả về
+     và không làm đổi thứ tự dữ liệu đang dùng trong ứng dụng. */
+  function chuoiSoSanh(du) {
+    if (!du) return '';
+    const ban = { _phienBan: du._phienBan };
+    CAC_BANG.concat(['nguoidung']).forEach(function (bang) {
+      ban[bang] = (du[bang] || []).slice().sort(function (a, b) {
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
+    });
+    return JSON.stringify(ban);
+  }
+
   async function napNguoiDung(user) {
     const p = loiSupabase(await supabaseClient.from('profiles')
       .select('*').eq('id', user.id).single());
@@ -310,7 +357,27 @@ const DL = (function () {
     return nguoiDungHienTai;
   }
 
+  /* Nạp dữ liệu công khai (phòng trống, giá dịch vụ) khi chưa đăng nhập */
+  async function napDuLieuCongKhai() {
+    const du = khoDuLieuTrong();
+    try {
+      const congKhai = await supabaseClient.from('app_records')
+        .select('table_name, record_id, payload')
+        .in('table_name', ['phong', 'dichvu']);
+      if (!congKhai.error) {
+        (congKhai.data || []).forEach(function (hang) {
+          if (!du[hang.table_name]) return;
+          du[hang.table_name].push(Object.assign({}, hang.payload, { id: hang.record_id }));
+        });
+      }
+    } catch (e) {
+      /* Không chặn trang giới thiệu nếu chưa chạy migration công khai. */
+    }
+    boNho = du;
+  }
+
   async function khoiTao() {
+    chuyenKhoaCu();
     if (!cheDoSupabase) {
       doc();
       return;
@@ -332,19 +399,7 @@ const DL = (function () {
       boNho = khoDuLieuTrong();
       /* Trang giới thiệu công khai: nạp phòng trống và bảng giá dịch vụ
          qua policy dành cho anon (xem migration 202611110005). */
-      try {
-        const congKhai = await supabaseClient.from('app_records')
-          .select('table_name, record_id, payload')
-          .in('table_name', ['phong', 'dichvu']);
-        if (!congKhai.error) {
-          (congKhai.data || []).forEach(function (hang) {
-            if (!boNho[hang.table_name]) return;
-            boNho[hang.table_name].push(Object.assign({}, hang.payload, { id: hang.record_id }));
-          });
-        }
-      } catch (e) {
-        /* Không chặn trang giới thiệu nếu chưa chạy migration công khai. */
-      }
+      await napDuLieuCongKhai();
       return;
     }
     await napNguoiDung(session.user);
@@ -355,6 +410,156 @@ const DL = (function () {
       baoLoiBackend(loi);
     });
     return hangDoiGhi;
+  }
+
+  /* ===== Tự động đồng bộ dữ liệu ===== */
+
+  /* Báo cho giao diện biết dữ liệu vừa thay đổi (gộp các thay đổi liên tiếp) */
+  function baoVuaDoi() {
+    if (henBaoVuaDoi) clearTimeout(henBaoVuaDoi);
+    henBaoVuaDoi = setTimeout(function () {
+      henBaoVuaDoi = null;
+      if (typeof window.duLieuVuaDoi === 'function') window.duLieuVuaDoi();
+    }, 150);
+  }
+
+  /* Tải lại toàn bộ dữ liệu từ Supabase.
+     Trả về true nếu dữ liệu khác với lần tải trước. */
+  function taiLaiDuLieu() {
+    if (!cheDoSupabase || !supabaseClient) return Promise.resolve(false);
+    if (dangTaiLai) return dangTaiLai;
+    dangTaiLai = (async function () {
+      try {
+        /* Chờ các thao tác ghi đang xếp hàng xong để đọc được dữ liệu mới nhất */
+        await hangDoiGhi;
+        const ketQua = await supabaseClient.auth.getSession();
+        if (ketQua.error) throw ketQua.error;
+        const session = ketQua.data.session;
+        const truoc = chuoiSoSanh(boNho);
+        if (session) {
+          await napNguoiDung(session.user);
+        } else if (nguoiDungHienTai) {
+          /* Phiên đã bị đăng xuất ở nơi khác: dừng theo dõi và báo lỗi */
+          nguoiDungHienTai = null;
+          profileHienTai = null;
+          boNho = khoDuLieuTrong();
+          ngatTheoDoi();
+          throw new Error('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.');
+        } else {
+          await napDuLieuCongKhai();
+        }
+        return truoc !== chuoiSoSanh(boNho);
+      } finally {
+        dangTaiLai = null;
+      }
+    })();
+    return dangTaiLai;
+  }
+
+  function taiLaiVaBao() {
+    taiLaiDuLieu().then(function (coThayDoi) {
+      if (coThayDoi && khiDuLieuDoi) khiDuLieuDoi();
+    }).catch(function (loi) {
+      console.error('Tải lại dữ liệu thất bại:', loi);
+      if (String((loi && loi.message) || '').indexOf('Phiên đăng nhập đã kết thúc') === 0) {
+        if (typeof window.xuLyMatPhien === 'function') window.xuLyMatPhien();
+        return;
+      }
+      /* Tránh báo lỗi lặp lại quá dày khi mất mạng */
+      if (Date.now() - lanBaoLoi > 60000 && typeof window.thongBao === 'function') {
+        lanBaoLoi = Date.now();
+        window.thongBao('Không thể cập nhật dữ liệu mới: ' + (loi.message || loi), 'loi');
+      }
+    });
+  }
+
+  /* Gộp các sự kiện thay đổi dồn dập thành một lần tải lại */
+  function henTaiLaiDuLieu() {
+    if (henTaiLai) clearTimeout(henTaiLai);
+    henTaiLai = setTimeout(function () {
+      henTaiLai = null;
+      taiLaiVaBao();
+    }, 400);
+  }
+
+  function ngatTheoDoi() {
+    if (kenhRealtime && supabaseClient) {
+      try { supabaseClient.removeChannel(kenhRealtime); } catch (e) { /* bỏ qua */ }
+    }
+    kenhRealtime = null;
+    if (henQuet) { clearInterval(henQuet); henQuet = null; }
+    if (henTaiLai) { clearTimeout(henTaiLai); henTaiLai = null; }
+    if (henBaoVuaDoi) { clearTimeout(henBaoVuaDoi); henBaoVuaDoi = null; }
+  }
+
+  /* Nghe thay đổi trên Supabase Realtime */
+  function batDauRealtime() {
+    if (!cheDoSupabase || !supabaseClient || !profileHienTai) return;
+    const ownerId = profileHienTai.role === 'owner' ? profileHienTai.id : profileHienTai.owner_id;
+    if (!ownerId) return;
+    if (kenhRealtime) {
+      try { supabaseClient.removeChannel(kenhRealtime); } catch (e) { /* bỏ qua */ }
+    }
+    kenhRealtime = supabaseClient
+      .channel('lmaria-du-lieu-' + ownerId)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'app_records', filter: 'owner_id=eq.' + ownerId },
+        henTaiLaiDuLieu)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: 'id=eq.' + profileHienTai.id },
+        henTaiLaiDuLieu);
+    if (profileHienTai.role === 'owner') {
+      kenhRealtime = kenhRealtime.on('postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: 'owner_id=eq.' + ownerId },
+        henTaiLaiDuLieu);
+    }
+    kenhRealtime.subscribe(function (trangThai) {
+      if (trangThai === 'CHANNEL_ERROR' || trangThai === 'TIMED_OUT') {
+        console.warn('Realtime mất kết nối, chuyển sang quét định kỳ.');
+      }
+    });
+  }
+
+  /* Quét dự phòng khi Realtime bị tắt hoặc mất kết nối */
+  function batDauQuet() {
+    if (henQuet) clearInterval(henQuet);
+    henQuet = setInterval(function () {
+      if (document.visibilityState === 'hidden') return;
+      taiLaiVaBao();
+    }, 20000);
+  }
+
+  /* Quay lại tab thì cập nhật ngay */
+  function khiQuayLaiTab() {
+    if (document.visibilityState === 'hidden') return;
+    taiLaiVaBao();
+  }
+
+  /* Chế độ localStorage: đồng bộ khi tab khác ghi dữ liệu */
+  function khiStorageDoi(e) {
+    if (cheDoSupabase || e.key !== KHOA_DB) return;
+    boNho = null;
+    doc();
+    if (khiDuLieuDoi) khiDuLieuDoi();
+  }
+
+  /* Bật tự động cập nhật. callback được gọi khi dữ liệu thật sự thay đổi. */
+  function batDauTheoDoi(callback) {
+    khiDuLieuDoi = typeof callback === 'function' ? callback : null;
+    if (!cheDoSupabase) {
+      if (!daTheoDoi) {
+        daTheoDoi = true;
+        window.addEventListener('storage', khiStorageDoi);
+      }
+      return;
+    }
+    if (!daTheoDoi) {
+      daTheoDoi = true;
+      document.addEventListener('visibilitychange', khiQuayLaiTab);
+      window.addEventListener('focus', khiQuayLaiTab);
+    }
+    batDauRealtime();
+    batDauQuet();
   }
 
   function ghiBanGhi(bang, obj, chiCapNhat) {
@@ -395,6 +600,7 @@ const DL = (function () {
       }));
       const local = (boNho.nguoidung || []).find(function (x) { return x.id === nguoiDung.id; });
       if (local) Object.assign(local, nguoiDung);
+      baoVuaDoi();
     });
   }
 
@@ -540,6 +746,7 @@ const DL = (function () {
     ds.push(obj);
     if (cheDoSupabase) ghiBanGhi(bang, obj);
     else luu();
+    baoVuaDoi();
     return obj;
   }
 
@@ -550,6 +757,7 @@ const DL = (function () {
       if (!nguoiDung) return null;
       Object.assign(nguoiDung, thayDoi);
       ghiHoSo(nguoiDung);
+      baoVuaDoi();
       return nguoiDung;
     }
     const o = tim(bang, id);
@@ -557,6 +765,7 @@ const DL = (function () {
     Object.assign(o, thayDoi);
     if (cheDoSupabase) ghiBanGhi(bang, o, true);
     else luu();
+    baoVuaDoi();
     return o;
   }
 
@@ -593,6 +802,7 @@ const DL = (function () {
           .eq('owner_id', ownerId).eq('table_name', bang).eq('record_id', id));
       });
     } else luu();
+    baoVuaDoi();
     return true;
   }
 
@@ -620,6 +830,7 @@ const DL = (function () {
     const ds = boNho.nguoidung || [];
     const i = ds.findIndex(function (u) { return u.id === userId; });
     if (i >= 0) ds.splice(i, 1);
+    baoVuaDoi();
     return true;
   }
 
@@ -972,6 +1183,7 @@ const DL = (function () {
   }
 
   async function dangXuat() {
+    ngatTheoDoi();
     if (cheDoSupabase && supabaseClient) {
       const ketQua = await supabaseClient.auth.signOut();
       if (ketQua.error) throw ketQua.error;
@@ -1110,6 +1322,7 @@ const DL = (function () {
     xacThucMatKhau: xacThucMatKhau,
     capNhatMatKhauTuLienKet: capNhatMatKhauTuLienKet,
     coSoCuaPhien: coSoCuaPhien, khoiTao: khoiTao, choGhiXong: function () { return hangDoiGhi; },
+    taiLaiDuLieu: taiLaiDuLieu, batDauTheoDoi: batDauTheoDoi, ngatTheoDoi: ngatTheoDoi,
     tangLuotMoHoaDon: tangLuotMoHoaDon,
     nhapDuLieuCu: nhapDuLieuCu, napBoDuLieuThu: napBoDuLieuThu, cheDoSupabase: cheDoSupabase
   };

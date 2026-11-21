@@ -1,4 +1,4 @@
-# Hệ thống quản lý phòng trọ
+# L.Maria · Hệ thống quản lý phòng trọ
 
 Tài liệu gồm hai phần: **ràng buộc khi viết code** (mục 0) và **đặc tả chức năng** theo vai trò (mục 1 trở đi).
 

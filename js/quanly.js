@@ -136,9 +136,8 @@ function veChiSo() {
     const kq = luuMotThe(card);
     if (kq) {
       capNhatTrangThaiThe(card);
-      const demEl = document.getElementById('demChiSo');
       const daChot = khu.querySelectorAll('.the-phong .nhan--xanh-la').length;
-      if (demEl) demEl.textContent = daChot + ' / ' + phongDS.length + ' phòng đã chốt';
+      capNhatThongKeChiSo(phongDS.length, daChot);
     }
   };
 }
@@ -198,6 +197,26 @@ function capNhatTrangThaiThe(card) {
     nhanCu.className = 'nhan nhan--xanh-la';
     nhanCu.textContent = 'Đã chốt';
   }
+  /* Đánh dấu chỉ số đã lưu để lần vẽ lại sau không coi là đang nhập dở */
+  card.querySelectorAll('input[data-dien-moi], input[data-nuoc-moi]').forEach(function (o) {
+    o.setAttribute('value', o.value);
+  });
+}
+
+/* Cập nhật ba ô thống kê của màn ghi chỉ số (không vẽ lại cả lưới
+   để giữ nguyên số đang nhập ở các phòng khác) */
+function capNhatThongKeChiSo(tong, daChot) {
+  const khu = document.getElementById('khuChiSo');
+  if (khu) {
+    const oSo = khu.querySelectorAll('.luoi-thong-ke .thong-ke__so');
+    if (oSo.length >= 3) {
+      oSo[0].textContent = tong;
+      oSo[1].textContent = daChot;
+      oSo[2].textContent = tong - daChot;
+    }
+  }
+  const oDem = document.getElementById('demChiSo');
+  if (oDem) oDem.textContent = daChot + ' / ' + tong + ' phòng đã chốt';
 }
 
 function luuTatCaChiSo() {

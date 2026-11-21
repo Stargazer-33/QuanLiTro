@@ -568,6 +568,8 @@ function nhanHopDong(h) {
 }
 
 function manHopDong(quyen) {
+  /* Đăng ký hàm vẽ lại để danh sách tự cập nhật khi dữ liệu đổi */
+  datHamVeLai(function () { manHopDong(quyen); });
   const khu = document.getElementById('noidung');
   khu.innerHTML =
     '<div class="man">' +
@@ -677,6 +679,8 @@ function veHopDong(quyen) {
 
 /* Xem chi tiết hợp đồng */
 function manHopDongChiTiet(id, quyen) {
+  /* Đăng ký hàm vẽ lại để chi tiết tự cập nhật khi dữ liệu đổi */
+  datHamVeLai(function () { manHopDongChiTiet(id, quyen); });
   const h = DL.tim('hopdong', id);
   const khu = document.getElementById('noidung');
   if (!h) {

@@ -195,7 +195,7 @@ function ganTaiKhoanThu() {
   const khoi = document.getElementById('taiKhoanThu');
   if (!khoi) return;
   const coDuLieuThu = DL.lay('nguoidung').some(function (u) {
-    return u.tenDangNhap === 'admin@ancu.vn';
+    return u.tenDangNhap === 'admin@lmaria.vn';
   });
   if (!coDuLieuThu) return;
 

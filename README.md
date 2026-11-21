@@ -38,13 +38,13 @@ các tài khoản sau (trang đăng nhập cũng hiện danh sách để điền
 
 | Vai trò | Tên đăng nhập | Mật khẩu | Ghi chú |
 |---|---|---|---|
-| Chủ trọ | `admin@ancu.vn` | `12345678` | Toàn quyền quản lý |
-| Quản lý | `quanly@ancu.vn` | `12345678` | Phụ trách cơ sở Khu A |
-| Quản lý | `quanly.b@ancu.vn` | `12345678` | Phụ trách cơ sở Khu B |
-| Khách thuê | `an@ancu.vn` | `12345678` | Đang ở phòng P101 |
+| Chủ trọ | `admin@lmaria.vn` | `12345678` | Toàn quyền quản lý |
+| Quản lý | `quanly@lmaria.vn` | `12345678` | Phụ trách cơ sở Khu A |
+| Quản lý | `quanly.b@lmaria.vn` | `12345678` | Phụ trách cơ sở Khu B |
+| Khách thuê | `an@lmaria.vn` | `12345678` | Đang ở phòng P101 |
 | Khách thuê | `0923456789@tenant.local` | `Tam@864209` | Mật khẩu tạm, buộc đổi khi đăng nhập |
-| Khách thuê | `mai@ancu.vn` | `12345678` | Chưa được xếp phòng |
-| Khách thuê | `bich@ancu.vn` | `12345678` | Tài khoản đang bị khóa |
+| Khách thuê | `mai@lmaria.vn` | `12345678` | Chưa được xếp phòng |
+| Khách thuê | `bich@lmaria.vn` | `12345678` | Tài khoản đang bị khóa |
 
 ## Cấu trúc
 
@@ -110,6 +110,10 @@ Chạy tiếp
 để khách thuê tăng được lượt mở hóa đơn, và
 [`supabase/migrations/202611110005_tenant_meter_readings.sql`](./supabase/migrations/202611110005_tenant_meter_readings.sql)
 để khách thuê đọc được chỉ số điện nước của phòng mình cùng dữ liệu công khai cho trang giới thiệu.
+Chạy thêm
+[`supabase/migrations/202611210001_bat_realtime.sql`](./supabase/migrations/202611210001_bat_realtime.sql)
+để bật Realtime: trang đang mở sẽ tự cập nhật khi dữ liệu thay đổi từ tab, thiết bị hoặc vai trò
+khác. Nếu bỏ qua migration này, ứng dụng vẫn tự quét lại mỗi 20 giây nhưng không cập nhật tức thì.
 
 Nếu chưa cài database, chạy migration một lần trong **Supabase → SQL Editor**. Tạo người dùng
 chủ trọ đầu tiên tại **Authentication → Users** (bật Auto Confirm), sau đó chạy
@@ -207,9 +211,9 @@ trước khi đưa dữ liệu thật vào.
 Mở DevTools → Console và chạy:
 
 ```js
-localStorage.removeItem('ancu_db_v1');
-localStorage.removeItem('ancu_phien_v1');
-sessionStorage.removeItem('ancu_phien_tam_v1');
+localStorage.removeItem('lmaria_db_v1');
+localStorage.removeItem('lmaria_phien_v1');
+sessionStorage.removeItem('lmaria_phien_tam_v1');
 location.reload();
 ```
 

@@ -80,7 +80,7 @@ function veBangGia() {
 
   const ds = DL.lay('dichvu');
   const dau = '<div class="the__dau"><div><h3>Bảng giá dịch vụ</h3>' +
-    '<p>Đơn giá đang áp dụng tại An Cư</p></div></div>';
+    '<p>Đơn giá đang áp dụng tại L.Maria</p></div></div>';
 
   if (!ds.length) {
     khu.innerHTML = dau + '<p class="ghi-chu-nho">Chưa có bảng giá dịch vụ.</p>';
@@ -130,6 +130,13 @@ document.addEventListener('DOMContentLoaded', function () {
     veBangGia();
     capNhatLoiVao();
     capNhatNam();
+
+    /* Tự cập nhật phòng trống và bảng giá khi dữ liệu thay đổi */
+    DL.batDauTheoDoi(function () {
+      capNhatThongKe(DL.lay('phong'));
+      vePhongTrong();
+      veBangGia();
+    });
   }).catch(function (loi) {
     console.error('Không tải được trang giới thiệu:', loi);
     const khu = document.getElementById('danhSachPhongTrong');

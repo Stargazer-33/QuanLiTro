@@ -132,6 +132,8 @@ function dongHop() {
   hopDangMo.remove();
   hopDangMo = null;
   if (typeof khiDong === 'function') khiDong();
+  /* Nếu có dữ liệu mới chờ sẵn thì vẽ lại sau khi hộp thoại đóng */
+  veLaiSauKhiDong();
 }
 
 /* Mở hộp thoại. opts: {tieuDe, moTa, noiDung, chanTrang, rong, khoa} */
@@ -324,7 +326,7 @@ function khoiTaoKhung(cauHinh) {
   if (thanhTren) {
     thanhTren.innerHTML =
       '<div class="thanh-tren__noi">' +
-        '<a class="thuong-hieu" href="../index.html">An Cư<span>·</span></a>' +
+        '<a class="thuong-hieu" href="../index.html">L.Maria<span>·</span></a>' +
         '<span class="thanh-tren__ngan">Quản lý phòng trọ</span>' +
         '<div class="thanh-tren__phai">' +
           '<span class="thanh-tren__nguoi"><span class="avatar">' + thoat(chuDau) + '</span>' + thoat(nd.hoTen) + '</span>' +
@@ -370,13 +372,101 @@ function khoiTaoKhung(cauHinh) {
     hienDoiMatKhauBatBuoc(nd);
     return null;
   }
+
+  /* Bật tự động cập nhật dữ liệu cho mọi màn hình của vai trò */
+  DL.batDauTheoDoi(lamMoiManHinh);
   return nd;
 }
+
+/* ---------- Tự động cập nhật màn hình khi dữ liệu thay đổi ---------- */
+
+let hamVeLaiHienTai = null;
+let choVeLai = false;
+let henVeLai = null;
+let lanVeCuoi = 0;
+
+/* Cho phép màn hình con (ví dụ chi tiết hợp đồng) tự đăng ký hàm vẽ lại */
+function datHamVeLai(fn) {
+  hamVeLaiHienTai = typeof fn === 'function' ? fn : null;
+}
+
+/* Kiểm tra có đang nhập dở dữ liệu trên màn hình không (tránh mất chữ đã gõ) */
+function dangBanNhap() {
+  if (hopDangMo) return true;
+  const o = document.activeElement;
+  if (o && o.closest && o.closest('#noidung') &&
+      (o.tagName === 'INPUT' || o.tagName === 'TEXTAREA' || o.tagName === 'SELECT' || o.isContentEditable)) {
+    return true;
+  }
+  /* Ô chỉ số điện/nước đã nhập nhưng chưa lưu */
+  const dsChiSo = document.querySelectorAll('#noidung [data-dien-moi], #noidung [data-nuoc-moi]');
+  for (let i = 0; i < dsChiSo.length; i++) {
+    if (dsChiSo[i].value !== dsChiSo[i].getAttribute('value')) return true;
+  }
+  return false;
+}
+
+/* Vẽ lại màn hình hiện tại với dữ liệu mới, giữ nguyên vị trí cuộn */
+function lamMoiManHinh() {
+  if (!hamVeLaiHienTai) return;
+  /* Gộp các lần vẽ sát nhau, nhưng vẫn hẹn vẽ lại để không bỏ sót thay đổi */
+  if (Date.now() - lanVeCuoi < 250) {
+    choVeLai = true;
+    if (!henVeLai) {
+      henVeLai = setTimeout(function () {
+        henVeLai = null;
+        if (choVeLai) lamMoiManHinh();
+      }, 260);
+    }
+    return;
+  }
+  if (dangBanNhap()) { choVeLai = true; return; }
+  choVeLai = false;
+  const cuon = window.scrollY;
+  try {
+    hamVeLaiHienTai();
+    lanVeCuoi = Date.now();
+    window.scrollTo(0, cuon);
+  } catch (e) {
+    console.error('Không vẽ lại được màn hình:', e);
+  }
+}
+
+/* Khi đóng hộp thoại / rời ô nhập thì vẽ bù phần đang chờ */
+function veLaiSauKhiDong() {
+  if (!choVeLai) return;
+  setTimeout(function () { if (choVeLai) lamMoiManHinh(); }, 0);
+}
+
+/* DL gọi hàm này khi dữ liệu vừa thay đổi */
+window.duLieuVuaDoi = function () {
+  choVeLai = true;
+  lamMoiManHinh();
+};
+
+/* Phiên đăng nhập bị kết thúc ở tab/thiết bị khác */
+window.xuLyMatPhien = function () {
+  if (window.__daXuLyMatPhien) return;
+  window.__daXuLyMatPhien = true;
+  thongBao('Phiên đăng nhập đã kết thúc. Đang chuyển về trang đăng nhập…', 'loi');
+  setTimeout(function () {
+    const tiep = encodeURIComponent(location.pathname.split('/').pop() + location.search + location.hash);
+    location.replace('dangnhap.html?tiep=' + tiep);
+  }, 1500);
+};
+
+document.addEventListener('focusout', function (e) {
+  if (e.target && e.target.closest && e.target.closest('#noidung')) {
+    setTimeout(function () { if (choVeLai) lamMoiManHinh(); }, 60);
+  }
+});
 
 /* Chuyển màn hình, chỉ thay nội dung trong #noidung */
 function chuyenManHinh(ten) {
   const ds = window.cacManHinh || {};
   if (!ds[ten]) return;
+  hamVeLaiHienTai = function () { ds[ten](); };
+  choVeLai = false;
   document.querySelectorAll('.menu__muc').forEach(function (b) {
     b.classList.toggle('dang-chon', b.dataset.man === ten);
   });
