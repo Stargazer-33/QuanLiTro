@@ -317,6 +317,29 @@ const DL = (function () {
     return ketQua.data;
   }
 
+  async function goiHamInviteUser(body) {
+    const ketQuaPhien = await supabaseClient.auth.getSession();
+    if (ketQuaPhien.error) throw ketQuaPhien.error;
+    let session = ketQuaPhien.data.session;
+    if (!session) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+
+    let ketQua = await supabaseClient.functions.invoke('invite-user', {
+      body: body,
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+    if (!ketQua.error || !ketQua.error.context || ketQua.error.context.status !== 401) return ketQua;
+
+    const ketQuaLamMoi = await supabaseClient.auth.refreshSession();
+    if (ketQuaLamMoi.error) throw ketQuaLamMoi.error;
+    session = ketQuaLamMoi.data.session;
+    if (!session) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+
+    return supabaseClient.functions.invoke('invite-user', {
+      body: body,
+      headers: { Authorization: 'Bearer ' + session.access_token }
+    });
+  }
+
   /* Chuỗi đại diện dữ liệu để so sánh thay đổi.
      Sắp xếp bản sao theo id nên không phụ thuộc thứ tự Supabase trả về
      và không làm đổi thứ tự dữ liệu đang dùng trong ứng dụng. */
@@ -816,9 +839,7 @@ const DL = (function () {
       throw new Error('Chỉ chủ trọ mới được xóa tài khoản.');
     }
     await hangDoiGhi;
-    const result = await supabaseClient.functions.invoke('invite-user', {
-      body: { action: 'delete-user', profile_id: userId }
-    });
+    const result = await goiHamInviteUser({ action: 'delete-user', profile_id: userId });
     if (result.error) {
       let loi = result.error.message;
       try {
@@ -1027,16 +1048,14 @@ const DL = (function () {
       }
       const matKhau = taoMatKhauTam();
       await hangDoiGhi;
-      const result = await supabaseClient.functions.invoke('invite-user', {
-        body: {
-          email: email,
-          password: matKhau,
-          full_name: o.hoTen,
-          role: loai,
-          employee_id: loai === 'manager' ? o.hoSoId : null,
-          tenant_id: loai === 'tenant' ? o.hoSoId : null,
-          facility_id: coSo ? coSo.id : (o.coSoId || null)
-        }
+      const result = await goiHamInviteUser({
+        email: email,
+        password: matKhau,
+        full_name: o.hoTen,
+        role: loai,
+        employee_id: loai === 'manager' ? o.hoSoId : null,
+        tenant_id: loai === 'tenant' ? o.hoSoId : null,
+        facility_id: coSo ? coSo.id : (o.coSoId || null)
       });
       if (result.error) {
         let loi = result.error.message;
@@ -1094,9 +1113,7 @@ const DL = (function () {
       const user = tim('nguoidung', userId);
       if (!user) throw new Error('Không tìm thấy tài khoản.');
       const matKhau = taoMatKhauTam();
-      const result = await supabaseClient.functions.invoke('invite-user', {
-        body: { action: 'reset-password', profile_id: userId, password: matKhau }
-      });
+      const result = await goiHamInviteUser({ action: 'reset-password', profile_id: userId, password: matKhau });
       if (result.error) {
         let loi = result.error.message;
         try {

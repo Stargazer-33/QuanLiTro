@@ -143,13 +143,13 @@ function moHop(opts) {
   lop.className = 'lop-phu';
   lop.innerHTML =
     '<div class="hop ' + (opts.rong ? 'hop--rong' : '') + (opts.hep ? ' hop--hep' : '') + '" role="dialog" aria-modal="true">' +
-      '<div class="hop__dau">' +
-        '<div><h2 class="hop__tieu-de">' + (opts.tieuDe || '') + '</h2>' +
-        (opts.moTa ? '<p class="hop__mo-ta">' + opts.moTa + '</p>' : '') + '</div>' +
-        (opts.khoa ? '' : '<button class="nut-dong" data-dong aria-label="Đóng">✕</button>') +
-      '</div>' +
-      '<div class="hop__than">' + (opts.noiDung || '') + '</div>' +
-      (opts.chanTrang ? '<div class="hop__chan">' + opts.chanTrang + '</div>' : '') +
+    '<div class="hop__dau">' +
+    '<div><h2 class="hop__tieu-de">' + (opts.tieuDe || '') + '</h2>' +
+    (opts.moTa ? '<p class="hop__mo-ta">' + opts.moTa + '</p>' : '') + '</div>' +
+    (opts.khoa ? '' : '<button class="nut-dong" data-dong aria-label="Đóng">✕</button>') +
+    '</div>' +
+    '<div class="hop__than">' + (opts.noiDung || '') + '</div>' +
+    (opts.chanTrang ? '<div class="hop__chan">' + opts.chanTrang + '</div>' : '') +
     '</div>';
   document.body.appendChild(lop);
   lop.addEventListener('click', function (e) {
@@ -326,12 +326,12 @@ function khoiTaoKhung(cauHinh) {
   if (thanhTren) {
     thanhTren.innerHTML =
       '<div class="thanh-tren__noi">' +
-        '<a class="thuong-hieu" href="../index.html">L.Maria<span>·</span></a>' +
-        '<span class="thanh-tren__ngan">Quản lý phòng trọ</span>' +
-        '<div class="thanh-tren__phai">' +
-          '<span class="thanh-tren__nguoi"><span class="avatar">' + thoat(chuDau) + '</span>' + thoat(nd.hoTen) + '</span>' +
-          '<button class="nut-tren" id="nutDangXuat">Đăng xuất</button>' +
-        '</div>' +
+      '<a class="thuong-hieu" href="../index.html">L.Maria<span>·</span></a>' +
+      '<span class="thanh-tren__ngan">Quản lý phòng trọ</span>' +
+      '<div class="thanh-tren__phai">' +
+      '<span class="thanh-tren__nguoi"><span class="avatar">' + thoat(chuDau) + '</span>' + thoat(nd.hoTen) + '</span>' +
+      '<button class="nut-tren" id="nutDangXuat">Đăng xuất</button>' +
+      '</div>' +
       '</div>';
     document.getElementById('nutDangXuat').onclick = function () {
       hoi('Đăng xuất?', 'Bạn sẽ quay về trang giới thiệu.', 'Đăng xuất').then(function (dongY) {
@@ -395,7 +395,7 @@ function dangBanNhap() {
   if (hopDangMo) return true;
   const o = document.activeElement;
   if (o && o.closest && o.closest('#noidung') &&
-      (o.tagName === 'INPUT' || o.tagName === 'TEXTAREA' || o.tagName === 'SELECT' || o.isContentEditable)) {
+    (o.tagName === 'INPUT' || o.tagName === 'TEXTAREA' || o.tagName === 'SELECT' || o.isContentEditable)) {
     return true;
   }
   /* Ô chỉ số điện/nước đã nhập nhưng chưa lưu */
@@ -488,16 +488,16 @@ function hienDoiMatKhauBatBuoc(nd) {
   lop.className = 'lop-phu lop-phu--khoa';
   lop.innerHTML =
     '<div class="hop hop--hep">' +
-      '<div class="hop__dau"><div><h2 class="hop__tieu-de">Đổi mật khẩu trước khi tiếp tục</h2>' +
-      '<p class="hop__mo-ta">Tài khoản của bạn đang dùng mật khẩu tạm. Hãy đặt mật khẩu riêng (tối thiểu 8 ký tự).</p></div></div>' +
-      '<div class="hop__than">' +
-        '<form id="formDoiBatBuoc" class="bieu-mau">' +
-          '<div class="nhom"><label for="mkMoi">Mật khẩu mới</label><input id="mkMoi" type="password" class="o-nhap" autocomplete="new-password"></div>' +
-          '<div class="nhom"><label for="mkLai">Nhập lại mật khẩu mới</label><input id="mkLai" type="password" class="o-nhap" autocomplete="new-password"></div>' +
-          '<p class="loi" id="loiDoi" hidden></p>' +
-        '</form>' +
-      '</div>' +
-      '<div class="hop__chan"><button class="nut nut--chinh" id="luuDoiBatBuoc">Đổi mật khẩu</button></div>' +
+    '<div class="hop__dau"><div><h2 class="hop__tieu-de">Đổi mật khẩu trước khi tiếp tục</h2>' +
+    '<p class="hop__mo-ta">Tài khoản của bạn đang dùng mật khẩu tạm. Hãy đặt mật khẩu riêng (tối thiểu 8 ký tự).</p></div></div>' +
+    '<div class="hop__than">' +
+    '<form id="formDoiBatBuoc" class="bieu-mau">' +
+    '<div class="nhom"><label for="mkMoi">Mật khẩu mới</label><input id="mkMoi" type="password" class="o-nhap" autocomplete="new-password"></div>' +
+    '<div class="nhom"><label for="mkLai">Nhập lại mật khẩu mới</label><input id="mkLai" type="password" class="o-nhap" autocomplete="new-password"></div>' +
+    '<p class="loi" id="loiDoi" hidden></p>' +
+    '</form>' +
+    '</div>' +
+    '<div class="hop__chan"><button class="nut nut--chinh" id="luuDoiBatBuoc">Đổi mật khẩu</button></div>' +
     '</div>';
   document.body.appendChild(lop);
   document.getElementById('luuDoiBatBuoc').onclick = function () {
@@ -537,14 +537,14 @@ function hienMatKhauTam(tenDangNhap, matKhau, hoTen, xong) {
     moTa: 'Mật khẩu chỉ hiển thị một lần. Hãy sao chép và gửi cho ' + thoat(hoTen) + '.',
     noiDung:
       '<div class="khoi-mat-khau">' +
-        '<p class="khoi-mat-khau__nhan">' + nhanTen + '</p>' +
-        '<div class="khoi-mat-khau__dong"><code>' + thoat(tenDangNhap) + '</code>' +
-        '<button type="button" class="nut nut--ngoc nut--nho" data-chep-ten>Sao chép</button></div>' +
-        '<p class="khoi-mat-khau__nhan">Mật khẩu tạm</p>' +
-        '<div class="khoi-mat-khau__dong"><code class="khoi-mat-khau__mk">' + thoat(matKhau) + '</code>' +
-        '<button type="button" class="nut nut--ngoc nut--nho" data-chep-mk>Sao chép</button></div>' +
-        '<p class="ghi-chu-nho">Gửi thông tin này cho người dùng qua Zalo, Messenger hoặc SMS. ' +
-        'Nếu quên mật khẩu, dùng nút “Đặt lại mật khẩu” để cấp mật khẩu mới.</p>' +
+      '<p class="khoi-mat-khau__nhan">' + nhanTen + '</p>' +
+      '<div class="khoi-mat-khau__dong"><code>' + thoat(tenDangNhap) + '</code>' +
+      '<button type="button" class="nut nut--ngoc nut--nho" data-chep-ten>Sao chép</button></div>' +
+      '<p class="khoi-mat-khau__nhan">Mật khẩu tạm</p>' +
+      '<div class="khoi-mat-khau__dong"><code class="khoi-mat-khau__mk">' + thoat(matKhau) + '</code>' +
+      '<button type="button" class="nut nut--ngoc nut--nho" data-chep-mk>Sao chép</button></div>' +
+      '<p class="ghi-chu-nho">Gửi thông tin này cho người dùng qua Zalo, Messenger hoặc SMS. ' +
+      'Nếu quên mật khẩu, dùng nút “Đặt lại mật khẩu” để cấp mật khẩu mới.</p>' +
       '</div>',
     chanTrang:
       '<button class="nut nut--ngoc" data-chep-tin>Sao chép tin nhắn</button>' +
@@ -566,51 +566,63 @@ function inHopDong(hd) {
   const html =
     '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>' + thoat(hd.ma) + '</title>' +
     '<style>' +
-      'body{font-family:"Times New Roman",serif;font-size:14px;line-height:1.6;color:#111;margin:32px 44px}' +
-      'h1{font-size:22px;text-align:center;margin:0 0 4px}h2{font-size:15px;margin:18px 0 6px}' +
-      '.phu{text-align:center;font-size:13px;color:#555;margin-bottom:22px}' +
-      '.hai-cot{display:grid;grid-template-columns:1fr 1fr;gap:20px}' +
-      'table{width:100%;border-collapse:collapse;margin:8px 0}td,th{border:1px solid #bbb;padding:6px 8px;text-align:left;vertical-align:top}' +
-      'th{background:#f3f3f3;font-weight:600}.ky{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:38px;text-align:center}' +
-      '.ky p{margin:0}.ky .ten{margin-top:70px;font-weight:600}' +
-      'ul{margin:6px 0 6px 18px;padding:0}' +
+    '@page{size:A4;margin:20mm 20mm}' +
+    'body{font-family:"Times New Roman",serif;font-size:14px;line-height:1.55;color:#111;margin:0}' +
+    '.quoc-hieu{text-align:center;font-weight:bold;margin-bottom:16px}' +
+    '.quoc-hieu p{margin:0;font-size:14px}' +
+    '.quoc-hieu .tieu-ngu{font-size:15px;border-bottom:1px solid #111;display:inline-block;padding-bottom:2px}' +
+    'h1{font-size:20px;text-align:center;margin:10px 0 4px;text-transform:uppercase}' +
+    'h2{font-size:15px;margin:14px 0 6px;text-transform:uppercase}' +
+    '.phu{text-align:center;font-size:13px;color:#444;margin-bottom:16px;font-style:italic}' +
+    '.hai-cot{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:10px}' +
+    '.pre-line{white-space:pre-line}' +
+    'table{width:100%;border-collapse:collapse;margin:8px 0}td,th{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}' +
+    'th{background:#f3f3f3;font-weight:600;width:30%}' +
+    '.ky{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:28px;text-align:center;break-inside:avoid}' +
+    '.ky p{margin:0}.ky .ghi-chu{font-size:12px;font-style:italic;color:#444}.ky .ten{margin-top:65px;font-weight:bold}' +
     '</style></head><body>' +
+    '<div class="quoc-hieu"><p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p><p class="tieu-ngu">Độc lập - Tự do - Hạnh phúc</p></div>' +
     '<h1>HỢP ĐỒNG THUÊ PHÒNG TRỌ</h1>' +
     '<p class="phu">Số: ' + thoat(hd.ma) + ' · Ngày ký: ' + ngay(hd.ngayKy) + '</p>' +
-    '<p>Hôm nay, ngày ' + ngay(hd.ngayKy) + ', tại ' + thoat(hd.diaChiChuNha) + ', chúng tôi gồm:</p>' +
-    '<h2>Bên cho thuê (Bên A)</h2>' +
+    '<p>Hôm nay, ngày ' + ngay(hd.ngayKy) + ', tại ' + thoat(hd.diaChiPhongTro || hd.diaChiChuNha) + ', chúng tôi gồm có:</p>' +
+    '<div class="hai-cot">' +
+    '<div><h2>Bên cho thuê (Bên A)</h2>' +
     '<p>Ông/Bà: <b>' + thoat(hd.chuNha) + '</b><br>CCCD: ' + thoat(hd.cccdChuNha) +
-    '<br>Địa chỉ: ' + thoat(hd.diaChiChuNha) + '<br>Điện thoại: ' + thoat(hd.sdtChuNha) + '</p>' +
-    '<h2>Bên thuê (Bên B)</h2>' +
+    '<br>Địa chỉ: ' + thoat(hd.diaChiChuNha) + '<br>Điện thoại: ' + thoat(hd.sdtChuNha) + '</p></div>' +
+    '<div><h2>Bên thuê (Bên B)</h2>' +
     '<p>Ông/Bà: <b>' + thoat(k.hoTen) + '</b><br>CCCD: ' + thoat(k.cccd) +
-    '<br>Địa chỉ: ' + thoat(k.diaChi) + '<br>Điện thoại: ' + thoat(k.sdt) +
+    '<br>Thường trú: ' + thoat(k.diaChi) + '<br>Điện thoại: ' + thoat(k.sdt) +
     (hd.nguoiOCung ? '<br>Người ở cùng: ' + thoat(hd.nguoiOCung) : '') +
-    '<br>Số người tối đa: ' + thoat(hd.soNguoiToiDa) + '</p>' +
-    '<h2>Điều 1 — Tài sản thuê</h2>' +
-    '<p>Bên A cho Bên B thuê phòng <b>' + thoat(p.ma) + ' — ' + thoat(p.ten) + '</b> tại ' +
-    thoat(hd.diaChiChuNha) + ', diện tích ' + thoat(p.dienTich) + ' m², mục đích: ' + thoat(hd.mucDich) + '.</p>' +
+    '<br>Số người tối đa: ' + thoat(hd.soNguoiToiDa) + ' người</p></div>' +
+    '</div>' +
+    '<h2>Điều 1 — Tài sản cho thuê</h2>' +
+    '<p>Bên A đồng ý cho Bên B thuê phòng số <b>' + thoat(p.ma) + ' — ' + thoat(p.ten) + '</b> tại địa chỉ: ' +
+    thoat(hd.diaChiPhongTro || hd.diaChiChuNha) + ', diện tích ' + thoat(p.dienTich) + ' m², mục đích sử dụng: ' + thoat(hd.mucDich) + '.</p>' +
     '<h2>Điều 2 — Thời hạn và giá thuê</h2>' +
-    '<table><tr><th>Thời hạn</th><td>Từ ' + ngay(hd.ngayBatDau) + ' đến ' + ngay(hd.ngayKetThuc) + '</td></tr>' +
-    '<tr><th>Tiền thuê</th><td>' + tien(hd.tienThue) + ' / tháng</td></tr>' +
-    '<tr><th>Tiền cọc</th><td>' + tien(hd.tienCoc) + '</td></tr>' +
+    '<table><tr><th>Thời hạn thuê</th><td>Từ ngày ' + ngay(hd.ngayBatDau) + ' đến ngày ' + ngay(hd.ngayKetThuc) + '</td></tr>' +
+    '<tr><th>Giá thuê phòng</th><td><b>' + tien(hd.tienThue) + '</b> / tháng</td></tr>' +
+    '<tr><th>Tiền đặt cọc</th><td><b>' + tien(hd.tienCoc) + '</b></td></tr>' +
     '<tr><th>Hạn thanh toán</th><td>Ngày ' + thoat(hd.hanThanhToan) + ' hằng tháng</td></tr>' +
     '<tr><th>Phương thức</th><td>' + thoat(hd.phuongThuc) + '</td></tr>' +
     '<tr><th>Tài khoản nhận tiền</th><td>' + thoat(hd.taiKhoanNhan) + '</td></tr>' +
-    '<tr><th>Giá điện / nước</th><td>' + tien(hd.giaDien) + ' / kWh · ' + tien(hd.giaNuoc) + ' / m³</td></tr>' +
-    '<tr><th>Phí dịch vụ</th><td>' + tien(hd.phiDichVu) + ' / tháng</td></tr></table>' +
-    '<h2>Điều 3 — Bàn giao</h2>' +
-    '<p>Ngày bàn giao: ' + ngay(hd.ngayBanGiao) + '<br>Hiện trạng: ' + thoat(hd.hienTrang) +
-    '<br>Chỉ số bàn giao: ' + thoat(hd.chiSoBanGiao) + '</p>' +
-    '<h2>Điều 4 — Quyền và nghĩa vụ</h2>' +
-    '<p>' + thoat(hd.dieuKhoan) + '</p>' +
-    '<h2>Điều 5 — Chấm dứt hợp đồng</h2>' +
-    '<p>Báo trước: ' + thoat(hd.soNgayBaoTruoc) + ' ngày. Hoàn cọc trong ' + thoat(hd.soNgayHoanCoc) + ' ngày.<br>' +
-    'Điều kiện chấm dứt sớm: ' + thoat(hd.dieuKienChamDut) + '<br>Khấu trừ cọc: ' + thoat(hd.khauTruCoc) + '</p>' +
-    '<h2>Điều 6 — Thỏa thuận khác</h2>' +
-    '<p>Trễ hạn: ' + thoat(hd.xuLyTreHan) + '<br>Tranh chấp: ' + thoat(hd.tranhChap) +
-    (hd.boSung ? '<br>Bổ sung: ' + thoat(hd.boSung) : '') + '</p>' +
-    '<div class="ky"><div><p>ĐẠI DIỆN BÊN A</p><p class="ten">' + thoat(hd.chuNha) + '</p></div>' +
-    '<div><p>ĐẠI DIỆN BÊN B</p><p class="ten">' + thoat(k.hoTen) + '</p></div></div>' +
+    '<tr><th>Đơn giá điện / nước</th><td>Điện: ' + tien(hd.giaDien) + ' / kWh · Nước: ' + tien(hd.giaNuoc) + ' / m³</td></tr>' +
+    '<tr><th>Phí dịch vụ khác</th><td>' + tien(hd.phiDichVu) + ' / tháng</td></tr></table>' +
+    '<h2>Điều 3 — Bàn giao tài sản</h2>' +
+    '<p class="pre-line">Ngày bàn giao: ' + ngay(hd.ngayBanGiao) + '\nHiện trạng & trang thiết bị: ' + thoat(hd.hienTrang) +
+    '\nChỉ số điện/nước bàn giao: ' + thoat(hd.chiSoBanGiao) + '</p>' +
+    '<h2>Điều 4 — Quyền và nghĩa vụ các bên</h2>' +
+    '<p class="pre-line">' + thoat(hd.dieuKhoan) + '</p>' +
+    '<h2>Điều 5 — Chấm dứt hợp đồng & Hoàn cọc</h2>' +
+    '<p class="pre-line">Thời gian báo trước: ' + thoat(hd.soNgayBaoTruoc) + ' ngày. Thời hạn hoàn cọc: ' + thoat(hd.soNgayHoanCoc) + ' ngày kể từ khi thanh lý.\n' +
+    'Điều kiện chấm dứt trước hạn: ' + thoat(hd.dieuKienChamDut) + '\nQuy định khấu trừ cọc: ' + thoat(hd.khauTruCoc) + '</p>' +
+    '<h2>Điều 6 — Cam kết chung & Thỏa thuận khác</h2>' +
+    '<p class="pre-line">Xử lý trễ hạn thanh toán: ' + thoat(hd.xuLyTreHan) + '\nGiải quyết tranh chấp: ' + thoat(hd.tranhChap) +
+    (hd.boSung ? '\nThỏa thuận bổ sung: ' + thoat(hd.boSung) : '') +
+    '\nHợp đồng được lập thành 02 (hai) bản có giá trị pháp lý như nhau, mỗi bên giữ 01 (một) bản.</p>' +
+    '<div class="ky">' +
+    '<div><p><b>BÊN CHO THUÊ (BÊN A)</b></p><p class="ghi-chu">(Ký và ghi rõ họ tên)</p><p class="ten">' + thoat(hd.chuNha) + '</p></div>' +
+    '<div><p><b>BÊN THUÊ (BÊN B)</b></p><p class="ghi-chu">(Ký và ghi rõ họ tên)</p><p class="ten">' + thoat(k.hoTen) + '</p></div>' +
+    '</div>' +
     '</body></html>';
   const cuaSo = window.open('', '_blank', 'width=900,height=1000');
   if (!cuaSo) { thongBao('Trình duyệt đã chặn cửa sổ in. Hãy cho phép rồi thử lại.', 'loi'); return; }
