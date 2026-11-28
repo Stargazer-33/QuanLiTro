@@ -1,7 +1,7 @@
 /* ============================================================
    trangchu.js — Trang giới thiệu: hiển thị phòng trống, bảng giá
    dịch vụ và điều chỉnh lối vào hệ thống theo phiên đăng nhập.
-   Chỉ dùng dữ liệu trong localStorage, không gọi mạng.
+   Dữ liệu phòng và giá dịch vụ được tải từ Supabase.
    ============================================================ */
 
 /* Chống chèn HTML lạ vào nội dung lấy từ dữ liệu */
@@ -43,8 +43,7 @@ function vePhongTrong() {
   if (soPhong) soPhong.textContent = ds.length;
 
   if (!ds.length) {
-    khu.innerHTML = '<div class="the-trong-toi">Hiện tại các phòng đã kín chỗ. ' +
-      'Vui lòng liên hệ nhà trọ để được ghi danh chờ phòng trống.</div>';
+    khu.innerHTML = '<div class="the-trong-toi">Chưa có dữ liệu phòng trống.</div>';
     return;
   }
 
@@ -58,7 +57,7 @@ function vePhongTrong() {
       .filter(Boolean).join(' · ');
     const ghiChu = p.ghiChu
       ? thoatHtml(p.ghiChu)
-      : 'Sẵn sàng nhận phòng, có thể xem ngay hôm nay.';
+      : '';
     return '<article class="the-phong-trong">' +
       '<div class="the-phong-trong__dau">' +
         '<span class="the-phong-trong__ma">' + thoatHtml(p.ma) + '</span>' +
@@ -139,10 +138,20 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }).catch(function (loi) {
     console.error('Không tải được trang giới thiệu:', loi);
+    document.querySelectorAll('[data-dem]').forEach(function (o) {
+      o.textContent = '—';
+    });
+    const soPhong = document.getElementById('soPhongTrong');
+    if (soPhong) soPhong.textContent = '—';
     const khu = document.getElementById('danhSachPhongTrong');
     if (khu) {
       khu.innerHTML = '<div class="the-trong-toi">Không tải được dữ liệu từ máy chủ. ' +
         'Vui lòng kiểm tra kết nối và tải lại trang.</div>';
+    }
+    const bangGia = document.getElementById('bangGiaDichVu');
+    if (bangGia) {
+      bangGia.innerHTML = '<div class="the__dau"><div><h3>Bảng giá dịch vụ</h3>' +
+        '<p>Không tải được dữ liệu từ Supabase.</p></div></div>';
     }
   });
 });

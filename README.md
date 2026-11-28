@@ -1,9 +1,8 @@
 # L.Maria · Hệ thống quản lý phòng trọ
 
-Ứng dụng quản lý nhà trọ thuần **HTML, CSS, JavaScript**. Khi có cấu hình trong
-`js/supabase-config.js`, đăng nhập và dữ liệu nghiệp vụ dùng Supabase Auth/Postgres.
-Không có cấu hình thì ứng dụng chạy bằng localStorage; lần đầu mở trang đăng nhập sẽ
-hiện biểu mẫu tạo tài khoản chủ trọ.
+Ứng dụng quản lý nhà trọ thuần **HTML, CSS, JavaScript**. Đăng nhập và dữ liệu nghiệp vụ
+được lấy từ Supabase Auth/Postgres; ứng dụng yêu cầu cấu hình trong `js/supabase-config.js`
+và không nạp dữ liệu mẫu hay dùng dữ liệu nghiệp vụ lưu trong trình duyệt.
 
 ## Cách chạy
 
@@ -22,30 +21,6 @@ Sau đó mở `http://localhost:8000/`.
 Cũng có thể mở trực tiếp `index.html` bằng trình duyệt. Lưu ý mỗi trình duyệt có thể
 quản lý `localStorage` của trang `file://` theo cách khác nhau; dùng static server sẽ ổn định hơn.
 
-## Chế độ localStorage
-
-Khi chưa cấu hình Supabase, dữ liệu được lưu trong trình duyệt. Lần đầu mở
-`html/dangnhap.html`, hệ thống hiện biểu mẫu tạo tài khoản chủ trọ đầu tiên; sau đó chủ trọ
-có thể tạo cơ sở, phòng và cấp tài khoản cho quản lý, khách thuê.
-
-Chế độ này chỉ dùng để chạy thử, không dùng cho dữ liệu thật. Xem mục
-[Đặt lại dữ liệu local](#đặt-lại-dữ-liệu-local) khi cần xoá sạch dữ liệu trong trình duyệt.
-
-Để thử đủ 3 vai trò, đăng nhập bằng tài khoản chủ trọ hiện có rồi vào
-**Tài khoản → Nạp bộ dữ liệu thử**. Nếu chưa có tài khoản nào, trang đăng nhập cũng có nút
-**Nạp bộ dữ liệu thử** để tạo nhanh. Bộ dữ liệu này thay toàn bộ dữ liệu local và tạo sẵn
-các tài khoản sau (trang đăng nhập cũng hiện danh sách để điền nhanh):
-
-| Vai trò | Tên đăng nhập | Mật khẩu | Ghi chú |
-|---|---|---|---|
-| Chủ trọ | `admin@lmaria.vn` | `12345678` | Toàn quyền quản lý |
-| Quản lý | `quanly@lmaria.vn` | `12345678` | Phụ trách cơ sở Khu A |
-| Quản lý | `quanly.b@lmaria.vn` | `12345678` | Phụ trách cơ sở Khu B |
-| Khách thuê | `an@lmaria.vn` | `12345678` | Đang ở phòng P101 |
-| Khách thuê | `0923456789@tenant.local` | `Tam@864209` | Mật khẩu tạm, buộc đổi khi đăng nhập |
-| Khách thuê | `mai@lmaria.vn` | `12345678` | Chưa được xếp phòng |
-| Khách thuê | `bich@lmaria.vn` | `12345678` | Tài khoản đang bị khóa |
-
 ## Cấu trúc
 
 ```
@@ -63,7 +38,7 @@ css/admin.css              Tinh chỉnh cho chủ trọ
 css/quanly.css             Tinh chỉnh cho quản lý
 css/khachthue.css          Tinh chỉnh cho khách thuê
 
-js/dulieu.js               Lớp dữ liệu localStorage/Supabase, CRUD, đăng nhập, nghiệp vụ tính tiền
+js/dulieu.js               Lớp dữ liệu Supabase, CRUD, đăng nhập, nghiệp vụ tính tiền
 js/chung.js                Định dạng, hộp thoại, khung trang, in hợp đồng
 js/trangchu.js             Hiển thị phòng trống và bảng giá
 js/dangnhap.js             Xử lý đăng nhập và chuyển trang theo vai trò
@@ -191,41 +166,17 @@ service role key.
    làm tên đăng nhập; địa chỉ này không cần nhận thư. Hộp thoại có nút **Sao chép tin nhắn** để
    gửi qua Zalo/Messenger/SMS. Tài khoản dùng `@tenant.local` không nhận được thư đặt lại mật
    khẩu; khi quên, chủ trọ mở hồ sơ và bấm **Đặt lại mật khẩu** để cấp mật khẩu tạm mới.
-6. Đăng nhập bằng tài khoản chủ trọ đã tạo. Khi Supabase chưa có dữ liệu nghiệp vụ và
-   muốn thử ứng dụng, chạy
-   [`supabase/seed_mock_data.sql`](./supabase/seed_mock_data.sql) trong SQL Editor. Script
-   SQL chỉ chạy khi có đúng một chủ trọ đang hoạt động và chủ trọ đó chưa có bản ghi
-   nghiệp vụ; script sẽ từ chối nếu đã có dữ liệu để tránh trộn dữ liệu mẫu với dữ liệu
-   thật. Dữ liệu mẫu không tạo tài khoản Supabase Auth; chỉ tài khoản chủ trọ hiện có
-   đăng nhập được. Muốn thử vai trò quản lý hoặc khách thuê, hãy cấp tài khoản cho họ
-   trong ứng dụng. Nếu có dữ liệu cũ trong localStorage, dùng riêng nút **Nhập dữ liệu cũ**.
-7. Thêm cơ sở, hồ sơ quản lý/khách thuê rồi cấp tài khoản. Có thể phân công quản lý vào cơ sở
+6. Đăng nhập bằng tài khoản chủ trọ đã tạo. Thêm cơ sở, hồ sơ quản lý/khách thuê rồi cấp tài khoản.
+   Có thể phân công quản lý vào cơ sở
    trước rồi mới cấp tài khoản; mỗi quản lý chỉ phụ trách một cơ sở.
 
 Tạo mới một project không tự động áp dụng migration; kiểm tra trong SQL Editor và không chạy
 lặp lại nếu schema đã tồn tại. Kiểm tra đăng nhập, cấp tài khoản và phân quyền bằng từng vai trò
 trước khi đưa dữ liệu thật vào.
 
-## Đặt lại dữ liệu local
-
-Mở DevTools → Console và chạy:
-
-```js
-localStorage.removeItem('lmaria_db_v1');
-localStorage.removeItem('lmaria_phien_v1');
-sessionStorage.removeItem('lmaria_phien_tam_v1');
-location.reload();
-```
-
-Hoặc xóa dữ liệu trang web trong phần cài đặt trình duyệt. Ứng dụng sẽ khởi động với dữ
-liệu trống và hiện biểu mẫu tạo tài khoản chủ trọ ở trang đăng nhập.
-
 ## Ghi chú kỹ thuật
 
 - Không dùng framework hoặc build frontend; SDK Supabase được tải từ CDN.
-- Chế độ localStorage chỉ dùng để chạy thử; không dùng mật khẩu ở đó cho Supabase hoặc
-  môi trường thật.
-- Dữ liệu cũ được nâng cấp tự động: các phòng hiện có được gán vào một cơ sở chính để giữ nguyên
-  hoạt động; chủ trọ có thể tạo thêm cơ sở và phân công quản lý trong mục **Cơ sở**.
+- Session Supabase được SDK lưu trong trình duyệt; dữ liệu nghiệp vụ được tải và lưu qua Supabase.
 - Lớp dữ liệu và Supabase Auth nằm trong `js/dulieu.js`; phân quyền dữ liệu cần tiếp tục được
   kiểm thử trên Supabase bằng từng vai trò trước khi triển khai thật.

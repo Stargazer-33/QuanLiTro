@@ -123,94 +123,6 @@ function ganQuenMatKhau() {
   });
 }
 
-/* Tạo tài khoản chủ trọ đầu tiên khi chạy chế độ localStorage */
-function ganKhoiTaoChuTro() {
-  if (DL.cheDoSupabase) return;
-  const khoi = document.getElementById('khoiTaoChuTro');
-  const form = document.getElementById('formKhoiTao');
-  if (!khoi || !form) return;
-  if (DL.lay('nguoidung').length) return;
-
-  const khoiForm = document.getElementById('khoiForm');
-  if (khoiForm) khoiForm.hidden = true;
-  khoi.hidden = false;
-
-  const nutThu = document.getElementById('nutThuTuDangNhap');
-  if (nutThu) {
-    nutThu.onclick = async function () {
-      const dongY = await hoi('Nạp bộ dữ liệu thử?', 'Tạo bộ dữ liệu mẫu kèm tài khoản chủ trọ, quản lý và khách thuê để đăng nhập thử.', 'Nạp dữ liệu thử');
-      if (!dongY) return;
-      nutThu.disabled = true;
-      try {
-        DL.napBoDuLieuThu();
-        location.reload();
-      } catch (loi) {
-        console.error('Nạp dữ liệu thử thất bại:', loi);
-        thongBao(loi.message || 'Không thể nạp dữ liệu thử.', 'loi');
-        nutThu.disabled = false;
-      }
-    };
-  }
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const hoTen = giaTri('ktHoTen').trim();
-    const ten = giaTri('ktTenDangNhap').trim().toLowerCase();
-    const matKhau = giaTri('ktMatKhau');
-    const lai = giaTri('ktMatKhauLai');
-    const loi = document.getElementById('loiKhoiTao');
-    function baoLoi(chu) { loi.hidden = false; loi.textContent = chu; }
-    loi.hidden = true;
-
-    if (!hoTen) return baoLoi('Vui lòng nhập họ tên chủ trọ.');
-    if (!ten) return baoLoi('Vui lòng nhập tên đăng nhập.');
-    if (matKhau.length < 8) return baoLoi('Mật khẩu phải có ít nhất 8 ký tự.');
-    if (matKhau !== lai) return baoLoi('Hai lần nhập mật khẩu không khớp.');
-
-    DL.them('nguoidung', {
-      tenDangNhap: ten,
-      matKhau: matKhau,
-      vaiTro: 'admin',
-      hoTen: hoTen,
-      hoSoId: null,
-      loaiHoSo: null,
-      trangThai: 'hoatdong',
-      phaiDoiMatKhau: false,
-      ngayTao: _homNay()
-    });
-
-    document.getElementById('tenDangNhap').value = ten;
-    document.getElementById('matKhau').value = matKhau;
-    khoi.hidden = true;
-    if (khoiForm) khoiForm.hidden = false;
-    thongBao('Đã tạo tài khoản chủ trọ. Bấm Đăng nhập để tiếp tục.');
-    const nut = document.getElementById('nutDangNhap');
-    if (nut) nut.focus();
-  });
-}
-
-/* Điền nhanh tài khoản thử khi đã nạp bộ dữ liệu thử */
-function ganTaiKhoanThu() {
-  if (DL.cheDoSupabase) return;
-  const khoi = document.getElementById('taiKhoanThu');
-  if (!khoi) return;
-  const coDuLieuThu = DL.lay('nguoidung').some(function (u) {
-    return u.tenDangNhap === 'admin@lmaria.vn';
-  });
-  if (!coDuLieuThu) return;
-
-  khoi.hidden = false;
-  document.querySelectorAll('[data-ten][data-mat-khau]').forEach(function (nut) {
-    nut.addEventListener('click', function () {
-      document.getElementById('tenDangNhap').value = nut.dataset.ten;
-      document.getElementById('matKhau').value = nut.dataset.matKhau;
-      anLoiDangNhap();
-      document.getElementById('nutDangNhap').focus();
-      thongBao('Đã điền tài khoản thử. Bấm Đăng nhập để tiếp tục.');
-    });
-  });
-}
-
 /* Xử lý gửi biểu mẫu đăng nhập */
 function ganDangNhap() {
   const form = document.getElementById('formDangNhap');
@@ -289,8 +201,6 @@ document.addEventListener('DOMContentLoaded', function () {
   DL.sanSang.then(function () {
     ganHienMatKhau();
     ganQuenMatKhau();
-    ganKhoiTaoChuTro();
-    ganTaiKhoanThu();
     ganDangNhap();
     ganPhienDangNhap();
     hienPhienDangNhap();

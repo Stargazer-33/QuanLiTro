@@ -1777,10 +1777,6 @@ function manTaiKhoan(quyen) {
             [DL.cheDoSupabase ? 'Email đăng nhập' : 'Tên đăng nhập', '<span class="ma-don">' + thoat(nd.tenDangNhap) + '</span>']].concat(moTaHoSo)) +
           '<div class="vach"></div>' +
           '<button class="nut nut--ngoc" id="nutDangXuatTk">Đăng xuất</button>' +
-          (quyen.khoiPhucDuLieu && !DL.cheDoSupabase
-            ? '<div class="vach"></div><p class="ghi-chu-nho">Bộ dữ liệu thử gồm cơ sở, phòng, khách thuê, hợp đồng, hóa đơn và tài khoản cho cả 3 vai trò. Thao tác này thay toàn bộ dữ liệu đang lưu trên trình duyệt.</p>' +
-              '<button class="nut nut--chinh" id="nutNapDuLieuThu" style="margin-top:8px">Nạp bộ dữ liệu thử</button>'
-            : '') +
         '</div>' +
         '<div class="the">' +
           '<div class="the__dau"><div><h3>Đổi mật khẩu</h3><p>Mật khẩu mới tối thiểu 8 ký tự.</p></div></div>' +
@@ -1804,25 +1800,6 @@ function manTaiKhoan(quyen) {
       });
     });
   };
-
-  const nutNapThu = document.getElementById('nutNapDuLieuThu');
-  if (nutNapThu) {
-    nutNapThu.onclick = async function () {
-      const dongY = await hoi('Nạp bộ dữ liệu thử?', 'Toàn bộ dữ liệu trên trình duyệt sẽ được thay bằng bộ dữ liệu thử với tài khoản cho chủ trọ, quản lý và khách thuê. Bạn sẽ được đưa về trang đăng nhập.', 'Nạp dữ liệu thử');
-      if (!dongY) return;
-      nutNapThu.disabled = true;
-      try {
-        const soLuong = DL.napBoDuLieuThu();
-        await DL.dangXuat();
-        thongBao('Đã nạp ' + soLuong + ' bản ghi thử. Đăng nhập bằng tài khoản mẫu để tiếp tục.');
-        location.href = 'dangnhap.html';
-      } catch (loi) {
-        console.error('Nạp dữ liệu thử thất bại:', loi);
-        thongBao(loi.message || 'Không thể nạp dữ liệu thử.', 'loi');
-        nutNapThu.disabled = false;
-      }
-    };
-  }
 
   document.getElementById('luuDoiTk').onclick = async function () {
     const hienTai = giaTri('mkHienTai');
